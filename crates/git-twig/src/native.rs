@@ -50,9 +50,158 @@ pub fn clone_path(source: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+#[cfg(windows)]
+pub fn clone_path(source: &Path, destination: &Path) -> Result<()> {
+    use std::{
+        fs::OpenOptions,
+        os::windows::{
+            fs::{MetadataExt, OpenOptionsExt},
+            io::AsRawHandle,
+        },
+        ptr::null_mut,
+    };
+    use windows_sys::Win32::{
+        Storage::FileSystem::{
+            FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_SPARSE_FILE, FILE_FLAG_OPEN_REPARSE_POINT,
+            GetVolumeInformationByHandleW,
+        },
+        System::{
+            Ioctl::{
+                CHECKSUM_TYPE_NONE, DUPLICATE_EXTENTS_DATA, FSCTL_DUPLICATE_EXTENTS_TO_FILE,
+                FSCTL_GET_INTEGRITY_INFORMATION, FSCTL_GET_INTEGRITY_INFORMATION_BUFFER,
+                FSCTL_SET_INTEGRITY_INFORMATION, FSCTL_SET_INTEGRITY_INFORMATION_BUFFER,
+                FSCTL_SET_SPARSE,
+            },
+            SystemServices::FILE_SUPPORTS_BLOCK_REFCOUNTING,
+        },
+    };
+    // Never follow a leaf reparse point or overwrite an existing destination.
+    let source = OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
+        .open(source)?;
+    let metadata = source.metadata()?;
+    anyhow::ensure!(
+        metadata.is_file() && metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0,
+        "source is not a regular file"
+    );
+    let mut flags = 0;
+    // SAFETY: the handle is live; zero-length name buffers are never written.
+    let result = unsafe {
+        GetVolumeInformationByHandleW(
+            source.as_raw_handle(),
+            null_mut(),
+            0,
+            null_mut(),
+            null_mut(),
+            &mut flags,
+            null_mut(),
+            0,
+        )
+    };
+    if result == 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+    anyhow::ensure!(
+        flags & FILE_SUPPORTS_BLOCK_REFCOUNTING != 0,
+        "volume does not support block cloning"
+    );
+    let mut integrity = FSCTL_GET_INTEGRITY_INFORMATION_BUFFER::default();
+    // SAFETY: this control code takes no input and writes this output type.
+    unsafe {
+        control(
+            &source,
+            FSCTL_GET_INTEGRITY_INFORMATION,
+            &(),
+            &mut integrity,
+        )?
+    };
+    let destination = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(destination)?;
+    // ReFS clones only between files with the same sparse and integrity settings.
+    if metadata.file_attributes() & FILE_ATTRIBUTE_SPARSE_FILE != 0 {
+        // SAFETY: an empty input buffer sets the sparse flag; there is no output.
+        unsafe { control(&destination, FSCTL_SET_SPARSE, &(), &mut ())? };
+    }
+    if integrity.ChecksumAlgorithm != CHECKSUM_TYPE_NONE as u16 {
+        let settings = FSCTL_SET_INTEGRITY_INFORMATION_BUFFER {
+            ChecksumAlgorithm: integrity.ChecksumAlgorithm,
+            Reserved: integrity.Reserved,
+            Flags: integrity.Flags,
+        };
+        // SAFETY: this control code reads this input type; there is no output.
+        unsafe {
+            control(
+                &destination,
+                FSCTL_SET_INTEGRITY_INFORMATION,
+                &settings,
+                &mut (),
+            )?
+        };
+    }
+    // Clone regions must end on a cluster boundary and stay below 4 GiB. A last
+    // partial cluster may round up past the end of file once the length is set.
+    let length = metadata.file_size();
+    destination.set_len(length)?;
+    let cluster = u64::from(integrity.ClusterSizeInBytes);
+    anyhow::ensure!(cluster.is_power_of_two(), "invalid cluster size");
+    let end = length.next_multiple_of(cluster);
+    let step = (4 << 30) - cluster;
+    for offset in (0..end).step_by(step as usize) {
+        let extents = DUPLICATE_EXTENTS_DATA {
+            FileHandle: source.as_raw_handle(),
+            SourceFileOffset: offset as i64,
+            TargetFileOffset: offset as i64,
+            ByteCount: step.min(end - offset) as i64,
+        };
+        // SAFETY: this control code reads this input type; both handles are live.
+        unsafe {
+            control(
+                &destination,
+                FSCTL_DUPLICATE_EXTENTS_TO_FILE,
+                &extents,
+                &mut (),
+            )?
+        };
+    }
+    Ok(())
+}
+
+/// # Safety
+/// The control code must read `I` and write `O`.
+#[cfg(windows)]
+unsafe fn control<I, O>(
+    file: &std::fs::File,
+    code: u32,
+    input: &I,
+    output: &mut O,
+) -> std::io::Result<()> {
+    use std::os::windows::io::AsRawHandle;
+    let mut returned = 0;
+    // SAFETY: the handle is live and both buffers stay valid for their sizes.
+    let result = unsafe {
+        windows_sys::Win32::System::IO::DeviceIoControl(
+            file.as_raw_handle(),
+            code,
+            std::ptr::from_ref(input).cast(),
+            size_of::<I>() as u32,
+            std::ptr::from_mut(output).cast(),
+            size_of::<O>() as u32,
+            &mut returned,
+            std::ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 pub fn clone_path(_: &Path, _: &Path) -> Result<()> {
-    bail!("native cloning requires macOS or Linux")
+    bail!("native cloning requires macOS, Linux or Windows")
 }
 
 /// Discover effective creation permissions without changing the process-global umask.
@@ -172,6 +321,59 @@ mod tests {
         assert!(clone_path(&root.join("fifo"), &root.join("fifo-copy")).is_err());
         assert!(!root.join("fifo-copy").exists());
         assert_eq!(fs::read(&source)?, b"source bytes");
+        eprintln!("fixture retained: {}", root.display());
+        Ok(())
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+    use std::{
+        fs,
+        path::PathBuf,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    #[test]
+    fn block_clone_keeps_partial_clusters_and_existing_destinations() -> Result<()> {
+        let root = std::env::var_os("TWIG_TEST_FIXTURE_ROOT")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/test-fixtures")
+            })
+            .join(format!(
+                "native-{}-{}",
+                std::process::id(),
+                SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+            ));
+        fs::create_dir_all(&root)?;
+        let source = root.join("source");
+        // Longer than a 64 KiB cluster, and ends inside a cluster.
+        let bytes: Vec<u8> = (0..70_001u32).map(|index| (index % 251) as u8).collect();
+        fs::write(&source, &bytes)?;
+        let destination = root.join("destination");
+        fs::write(&destination, "keep destination")?;
+        assert!(clone_path(&source, &destination).is_err());
+        assert_eq!(fs::read(&destination)?, b"keep destination");
+        assert!(clone_path(&root, &root.join("directory-copy")).is_err());
+        assert!(!root.join("directory-copy").exists());
+        let copy = root.join("copy");
+        match clone_path(&source, &copy) {
+            Ok(()) => {
+                assert_eq!(fs::read(&copy)?, bytes);
+                fs::write(&copy, "private")?;
+            }
+            Err(error) => {
+                assert!(
+                    std::env::var_os("TWIG_TEST_REQUIRE_NATIVE").is_none(),
+                    "{error:#}"
+                );
+                assert_eq!(error.to_string(), "volume does not support block cloning");
+                assert!(!copy.exists());
+            }
+        }
+        assert_eq!(fs::read(&source)?, bytes);
         eprintln!("fixture retained: {}", root.display());
         Ok(())
     }

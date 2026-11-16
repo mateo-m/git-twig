@@ -4,7 +4,7 @@ import skill from "../../../crates/git-twig/skills/git-twig/SKILL.md?raw";
 export const onboarding = `# Twig — git-worktrees for agents
 
 Twig creates ordinary linked Git worktrees using native copy-on-write.
-Native cloning needs macOS/APFS or Linux on Btrfs or reflink-enabled XFS.
+Native cloning needs macOS/APFS, Linux on Btrfs or reflink-enabled XFS, or Windows on ReFS.
 This is a prototype, not a sandbox.
 
 ## Install

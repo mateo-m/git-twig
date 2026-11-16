@@ -61,6 +61,13 @@ impl Objects {
                     use std::os::unix::fs::OpenOptionsExt;
                     options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
                 }
+                #[cfg(windows)]
+                {
+                    use std::os::windows::fs::OpenOptionsExt;
+                    options.custom_flags(
+                        windows_sys::Win32::Storage::FileSystem::FILE_FLAG_OPEN_REPARSE_POINT,
+                    );
+                }
                 let file = options.open(&path)?;
                 ensure!(
                     file.metadata()?.is_file(),

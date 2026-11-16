@@ -111,12 +111,13 @@ struct Prepared {
     commit: String,
     entries: Vec<Entry>,
     policy: checkout::Policy,
+    symlinks: bool,
 }
 
 fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> Result<Prepared> {
     ensure!(
-        cfg!(any(target_os = "macos", target_os = "linux")),
-        "native CoW is supported only on macOS and Linux"
+        cfg!(any(target_os = "macos", target_os = "linux", windows)),
+        "native CoW is supported only on macOS, Linux and Windows"
     );
     for key in [
         "GIT_DIR",
@@ -171,20 +172,25 @@ fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> 
     let destination = parent.join(destination.file_name().context("destination has no name")?);
     objects::ensure_literal_objects(&root)?;
     checkout::ensure_relocatable_worktree_config(&root)?;
-    let entries =
+    let mut entries =
         tree::parse(&checked(git(&root).args(["ls-tree", "-rz", "--full-tree", &commit]))?.stdout)?;
     ensure!(
         !entries.iter().any(|entry| entry.kind == Kind::Submodule),
         "submodules require stock Git"
     );
-    // These semantics are owned by Git, not by the CoW materializer.
-    if git(&root)
+    // With core.symlinks=false, Git checks out each symlink as a plain file that holds
+    // the link text. Git for Windows sets it in each repository that cannot create symlinks.
+    let symlinks = git(&root)
         .args(["config", "--bool", "--get", "core.symlinks"])
         .output()?
         .stdout
-        == b"false\n"
-    {
-        anyhow::bail!("core.symlinks=false requires stock Git");
+        != b"false\n";
+    if !symlinks {
+        for entry in &mut entries {
+            if entry.kind == Kind::Symlink {
+                entry.kind = Kind::File { executable: false };
+            }
+        }
     }
     // Reference/index hooks run while Git registers or initializes the worktree.
     // They may themselves call Twig: never hold our registrar lock across them.
@@ -207,7 +213,7 @@ fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> 
     let data = stage.join("data");
     fs::create_dir(&data)?;
     let index = stage.join("index");
-    let checkout = checkout::Checkout::new(&root, &data, &index)?;
+    let checkout = checkout::Checkout::new(&root, &data, &index, symlinks)?;
     checkout.initialize(&commit)?;
     let policy = checkout.policy(&entries)?;
     let modes = native::FileModes::new(&stage)?;
@@ -224,6 +230,7 @@ fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> 
         commit,
         entries,
         policy,
+        symlinks,
     })
 }
 
@@ -232,13 +239,16 @@ fn install(cwd: &Path, args: &[OsString], prepared: Prepared) -> Result<i32> {
     trace("APFS CoW: verified tracked files");
     #[cfg(target_os = "linux")]
     trace("Linux reflink CoW: verified tracked files");
+    #[cfg(windows)]
+    trace("Windows block clone CoW: verified tracked files");
     // Git enumerates peer worktree metadata while registering. Serialize Twig registrars
     // so none observes a peer between mkdir and writing commondir/HEAD.
     let registration_lock = lock_registration(&prepared.root)?;
     let data = prepared.stage.join("data");
     let index = prepared.stage.join("index");
     prepared.policy.ensure_same(
-        &checkout::Checkout::new(&prepared.root, &data, &index)?.policy(&prepared.entries)?,
+        &checkout::Checkout::new(&prepared.root, &data, &index, prepared.symlinks)?
+            .policy(&prepared.entries)?,
     )?;
     // Preserve Git's branch validation and registration. No fallback after this mutation.
     let status = git(cwd)
@@ -308,7 +318,7 @@ fn finish_install(prepared: &Prepared) -> Result<()> {
     let data = prepared.stage.join("data");
     let index = prepared.stage.join("index");
     prepared.policy.ensure_same(
-        &checkout::Checkout::new(&prepared.destination, &data, &index)?
+        &checkout::Checkout::new(&prepared.destination, &data, &index, prepared.symlinks)?
             .policy(&prepared.entries)?,
     )?;
     for entry in fs::read_dir(&data)? {

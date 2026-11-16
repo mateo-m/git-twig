@@ -31,9 +31,10 @@ Short help works outside a checkout: `git twig -h` or `git twig new --help`.
 
 For coding agents: `git twig skill` prints the bundled skill.
 
-Native CoW supports macOS/APFS and Linux on Btrfs or reflink-enabled XFS.
+Native CoW supports macOS/APFS, Linux on Btrfs or reflink-enabled XFS, and
+Windows on ReFS, such as a Dev Drive.
 Creates ordinary linked worktrees from committed files; local changes and ignored
-files aren't copied. Unsupported filesystems (including typical ext4), options and
+files aren't copied. Unsupported filesystems (including typical ext4 and NTFS), options and
 checkout semantics use `git worktree`. Set `TWIG_TRACE=1` to see backend selection.
 
 Source, destination and Git metadata must share a clone-capable filesystem for
@@ -85,7 +86,8 @@ cargo test --workspace --locked
 
 Linux CI tests the host filesystem plus reflink-enabled XFS and Btrfs images,
 requiring native CoW on both. Locally on a supported Linux filesystem, run
-`TWIG_TEST_REQUIRE_NATIVE=1 cargo test -p git-twig`. Tests and benchmarks retain
+`TWIG_TEST_REQUIRE_NATIVE=1 cargo test -p git-twig`. On Windows, also set
+`TWIG_TEST_FIXTURE_ROOT` to a directory on a Dev Drive. Tests and benchmarks retain
 fixtures under `target/`; disk use grows. See the
 [design contract](docs/rfds/RFD0001-verified-cow-worktrees.md),
 [Linux correctness boundaries](docs/rfds/RFD0012-linux-correctness-and-measurement.md),

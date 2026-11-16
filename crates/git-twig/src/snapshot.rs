@@ -63,12 +63,12 @@ pub fn materialize(
                     fs::symlink_metadata(&source)?.is_dir(),
                     "source directory changed type"
                 );
-                #[cfg(target_os = "linux")]
+                #[cfg(any(target_os = "linux", windows))]
                 {
                     clone_tracked_directory(&source, &target, directory, modes)?;
-                    continue; // The Linux walker already establishes types and checkout modes.
+                    continue; // The file walker already establishes types and checkout modes.
                 }
-                #[cfg(not(target_os = "linux"))]
+                #[cfg(not(any(target_os = "linux", windows)))]
                 {
                     native::clone_path(&source, &target)?;
                     let _ = directory;
@@ -100,9 +100,9 @@ pub fn materialize(
     })
 }
 
-// Linux FICLONE works on regular files, not directory trees. Walk only the
-// committed inventory so ignored files and unrelated special files are never opened.
-#[cfg(target_os = "linux")]
+// Linux FICLONE and Windows block cloning work on regular files, not directory trees.
+// Walk only the committed inventory so ignored files and unrelated special files are never opened.
+#[cfg(any(target_os = "linux", windows))]
 fn clone_tracked_directory(
     source: &Path,
     target: &Path,

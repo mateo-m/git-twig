@@ -9,6 +9,7 @@ use std::{
 
 #[path = "cases/checkout_policy.rs"]
 mod checkout_policy;
+#[cfg(unix)]
 #[path = "cases/checkout_races.rs"]
 mod checkout_races;
 #[path = "cases/fallback_diagnostics.rs"]
@@ -37,6 +38,12 @@ impl Fixture {
         ));
         fs::create_dir_all(&root)?;
         let root = fs::canonicalize(root)?;
+        // Git for Windows cannot read \\?\ paths in config values.
+        #[cfg(windows)]
+        let root = match root.to_str().and_then(|path| path.strip_prefix(r"\\?\")) {
+            Some(path) => PathBuf::from(path),
+            None => root,
+        };
         let source = root.join("source");
         fs::create_dir(&source)?;
         git(
@@ -202,6 +209,57 @@ fn linux_selects_reflinks_or_delegates_on_unsupported_filesystems() -> Result<()
     Ok(())
 }
 
+#[cfg(windows)]
+fn windows_block_clones_available(f: &Fixture) -> Result<bool> {
+    // Probe independently with PowerShell, not Twig. Windows block cloning needs ReFS.
+    let output = checked(
+        command("powershell", &f.source)
+            .args(["-NoProfile", "-Command"])
+            .arg(format!(
+                "(Get-Volume -FilePath '{}').FileSystemType",
+                f.source.display()
+            ))
+            .output()?,
+    )?;
+    let supported = output.stdout.trim_ascii() == b"ReFS";
+    if std::env::var_os("TWIG_TEST_REQUIRE_NATIVE").is_some() {
+        ensure!(supported, "test volume must support block cloning");
+    }
+    Ok(supported)
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_selects_block_clones_or_delegates_on_unsupported_volumes() -> Result<()> {
+    let f = Fixture::new()?;
+    fs::write(f.source.join("run.sh"), "echo run\n")?;
+    git(&f.source, &["add", "run.sh"])?;
+    git(&f.source, &["update-index", "--chmod=+x", "run.sh"])?;
+    git(&f.source, &["commit", "-m", "executable"])?;
+    let supported = windows_block_clones_available(&f)?;
+    let output = checked(f.add()?)?;
+    let trace = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(
+        trace.contains("Windows block clone CoW: verified tracked files"),
+        supported,
+        "{trace}"
+    );
+    if !supported {
+        assert!(
+            trace.contains("stock Git: volume does not support block cloning"),
+            "{trace}"
+        );
+    }
+    clean(&f.destination())?;
+    assert_eq!(
+        git(&f.destination(), &["ls-files", "-s", "run.sh"])?.stdout[..6],
+        *b"100755"
+    );
+    fs::write(f.destination().join("hello.txt"), "private")?;
+    assert_eq!(fs::read(f.source.join("hello.txt"))?, b"hello\n");
+    Ok(())
+}
+
 #[cfg(unix)]
 #[test]
 fn disabled_symlinks_delegate_for_root_and_nested_entries() -> Result<()> {
@@ -240,8 +298,14 @@ fn legacy_crlf_attributes_cannot_hide_dirty_raw_bytes() -> Result<()> {
         }
         let output = checked(f.add()?)?;
         native(&output);
+        // Git checks out plain crlf text with native line endings.
+        let checkout: &[u8] = if cfg!(windows) && attribute == "crlf" {
+            b"hello\r\n"
+        } else {
+            b"hello\n"
+        };
         for name in ["hello.txt", "tree/file.txt"] {
-            assert_eq!(fs::read(f.destination().join(name))?, b"hello\n");
+            assert_eq!(fs::read(f.destination().join(name))?, checkout);
             assert_eq!(fs::read(f.source.join(name))?, b"hello\r\n");
         }
         clean(&f.destination())?;
@@ -434,6 +498,38 @@ fn nested_tracked_fifo_falls_back_without_blocking_or_touching_source() -> Resul
             .is_fifo()
     );
     clean(&f.destination())
+}
+
+#[test]
+fn disabled_symlinks_clone_plain_link_files() -> Result<()> {
+    let f = Fixture::new()?;
+    git(&f.source, &["config", "core.symlinks", "false"])?;
+    fs::create_dir(f.source.join("tree"))?;
+    // Git for Windows checks out links this way when it cannot create symlinks.
+    for (name, target) in [("link", "hello.txt"), ("tree/link", "../hello.txt")] {
+        fs::write(f.source.join(name), target)?;
+        let object = git(&f.source, &["hash-object", "-w", name])?.stdout;
+        let object = String::from_utf8(object)?;
+        git(
+            &f.source,
+            &[
+                "update-index",
+                "--add",
+                "--cacheinfo",
+                &format!("120000,{},{name}", object.trim()),
+            ],
+        )?;
+    }
+    git(&f.source, &["commit", "-m", "links"])?;
+    clean(&f.source)?;
+    let output = checked(f.add()?)?;
+    native(&output);
+    clean(&f.destination())?;
+    for (name, target) in [("link", "hello.txt"), ("tree/link", "../hello.txt")] {
+        assert!(fs::symlink_metadata(f.destination().join(name))?.is_file());
+        assert_eq!(fs::read(f.destination().join(name))?, target.as_bytes());
+    }
+    Ok(())
 }
 
 #[test]

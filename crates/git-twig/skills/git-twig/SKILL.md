@@ -82,7 +82,8 @@ parsing the output in a script.
 - Only committed tracked files are included. Local edits and untracked/ignored
   files are excluded; tracked secrets are copied like any other tracked file.
   Install dependencies when needed.
-- Native CoW needs macOS/APFS or Linux on Btrfs or reflink-enabled XFS. Source,
+- Native CoW needs macOS/APFS, Linux on Btrfs or reflink-enabled XFS, or Windows
+  on ReFS, such as a Dev Drive. Source,
   destination and Git metadata must share a clone-capable filesystem. Creating at the source\'s HEAD
   is the optimized case. Other requests use stock Git.
 - CoW shares file data, not writes. It is not a sandbox and is not always faster.

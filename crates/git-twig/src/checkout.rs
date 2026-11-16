@@ -60,16 +60,18 @@ pub struct Checkout<'a> {
     git_dir: PathBuf,
     data: &'a Path,
     index: &'a Path,
+    symlinks: bool,
 }
 
 impl<'a> Checkout<'a> {
-    pub fn new(root: &Path, data: &'a Path, index: &'a Path) -> Result<Self> {
+    pub fn new(root: &Path, data: &'a Path, index: &'a Path, symlinks: bool) -> Result<Self> {
         let git_dir =
             output_path(checked(git(root).args(["rev-parse", "--absolute-git-dir"]))?.stdout)?;
         Ok(Self {
             git_dir,
             data,
             index,
+            symlinks,
         })
     }
 
@@ -87,7 +89,11 @@ impl<'a> Checkout<'a> {
                 "-c",
                 "core.filemode=true",
                 "-c",
-                "core.symlinks=true",
+                if self.symlinks {
+                    "core.symlinks=true"
+                } else {
+                    "core.symlinks=false"
+                },
             ]);
         command
     }
@@ -270,8 +276,10 @@ impl Attributes {
             b"false" | b"no" | b"off" | b"0" => {
                 // "unset" could be -text OR literal text=unset. Both are identity
                 // with autocrlf=false and no eol/crlf, regardless of core.eol.
+                // The native line ending is CRLF on Windows.
                 matches!(text, None | Some(b"unset" | b"unspecified"))
-                    || matches!(config.eol.as_slice(), b"lf" | b"native")
+                    || config.eol == b"lf"
+                    || (config.eol == b"native" && !cfg!(windows))
             }
             _ => false,
         }

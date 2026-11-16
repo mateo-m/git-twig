@@ -26,6 +26,10 @@ describe changes from this baseline after they are implemented and verified.
 - Hybrid creation: Git writes files requiring line-ending conversion or whose
   candidate bytes differ; other verified files retain copy-on-write sharing.
 - Trace counts for verified file clones and Git-written paths.
+- Native creation on Windows ReFS volumes, such as a Dev Drive, with block
+  cloning. NTFS and other volumes delegate to Git.
+- Native creation with `core.symlinks=false`: Git checks out symlinks as plain
+  files that hold the link text, and Twig clones them like other files.
 - Specific fallback reasons for unsupported requests, configuration, hooks and
   destinations; attribute refusals name the escaped path, attribute and value.
 - Differential and failure tests for line endings, literal attribute values,

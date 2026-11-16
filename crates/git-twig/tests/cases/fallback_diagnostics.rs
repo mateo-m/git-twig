@@ -58,6 +58,7 @@ fn environment_overrides_are_named_and_trace_is_opt_in() -> Result<()> {
     Ok(())
 }
 
+#[cfg(unix)]
 #[test]
 fn attribute_paths_are_escaped_in_diagnostics() -> Result<()> {
     let f = Fixture::new()?;
@@ -122,7 +123,7 @@ fn destination_reasons_preserve_existing_paths_and_git_parent_creation() -> Resu
 }
 
 #[test]
-fn hooks_and_disabled_symlinks_are_identified() -> Result<()> {
+fn hooks_are_identified() -> Result<()> {
     for event in ["reference-transaction", "post-index-change"] {
         let f = Fixture::new()?;
         fs::write(
@@ -133,11 +134,6 @@ fn hooks_and_disabled_symlinks_are_identified() -> Result<()> {
         reason(&output, &format!("{event} hook requires stock Git"));
         clean(&f.destination())?;
     }
-    let f = Fixture::new()?;
-    git(&f.source, &["config", "core.symlinks", "false"])?;
-    let output = checked(f.add()?)?;
-    reason(&output, "core.symlinks=false requires stock Git");
-    clean(&f.destination())?;
     Ok(())
 }
 
