@@ -535,3 +535,54 @@ fn conditional_includes_and_redirected_attribute_sources_delegate() -> Result<()
     assert_eq!(fs::read(f.destination().join("hello.txt"))?, CRLF);
     Ok(())
 }
+
+#[test]
+fn conditional_includes_of_identity_settings_stay_native() -> Result<()> {
+    let f = Fixture::new()?;
+    let include = f.root.join("identity-config");
+    fs::write(
+        &include,
+        "[user]\n name = Other\n[url \"git@example.invalid:\"]\n insteadOf = https://example.invalid/\n",
+    )?;
+    git(
+        &f.source,
+        &[
+            "config",
+            "includeIf.onbranch:feature.path",
+            include.to_str().unwrap(),
+        ],
+    )?;
+    git(
+        &f.source,
+        &[
+            "config",
+            "includeIf.gitdir:/nonexistent/.path",
+            f.root.join("missing").to_str().unwrap(),
+        ],
+    )?;
+    let output = checked(f.add()?)?;
+    native(&output);
+    assert_eq!(fs::read(f.destination().join("hello.txt"))?, LF);
+    Ok(())
+}
+
+#[test]
+fn relative_conditional_includes_delegate() -> Result<()> {
+    let f = Fixture::new()?;
+    git(
+        &f.source,
+        &[
+            "config",
+            "includeIf.onbranch:feature.path",
+            "identity-config",
+        ],
+    )?;
+    let output = checked(f.add()?)?;
+    let trace = String::from_utf8_lossy(&output.stderr);
+    assert!(!trace.contains("CoW: verified"), "{trace}");
+    assert!(
+        trace.contains("relative conditional config includes"),
+        "{trace}"
+    );
+    Ok(())
+}

@@ -105,6 +105,22 @@ impl<'a> Checkout<'a> {
     pub fn policy(&self, entries: &[Entry]) -> Result<Policy> {
         let config = checked(self.command().args(["config", "--null", "--list"]))?.stdout;
         let configuration = Configuration::parse(&config)?;
+        // A conditional include can add these to the new worktree only, so ensure_same skips them.
+        let config: Vec<u8> = config
+            .split_inclusive(|b| *b == 0)
+            .filter(|field| {
+                let key = field
+                    .split(|b| *b == b'\n' || *b == 0)
+                    .next()
+                    .unwrap_or_default();
+                !inert_config_key(&key.to_ascii_lowercase())
+            })
+            .flatten()
+            .copied()
+            .collect();
+        if configuration.conditional_includes {
+            self.ensure_inert_conditional_includes()?;
+        }
         let input = paths(entries.iter().map(|entry| entry.path.as_path()));
         let attributes = with_input(
             self.command()
@@ -118,6 +134,65 @@ impl<'a> Checkout<'a> {
             attributes,
             actions,
         })
+    }
+
+    /// A conditional include can apply in the source and not in the new worktree, or
+    /// the reverse. Clone only when no included file sets anything checkout reads.
+    fn ensure_inert_conditional_includes(&self) -> Result<()> {
+        let includes = self
+            .command()
+            .args([
+                "config",
+                "--null",
+                "--path",
+                "--get-regexp",
+                r"^includeif\..*\.path$",
+            ])
+            .output()?;
+        if includes.status.code() == Some(1) {
+            return Ok(());
+        }
+        let includes = checked_output(includes)?.stdout;
+        for field in includes
+            .split(|b| *b == 0)
+            .filter(|field| !field.is_empty())
+        {
+            let path = field
+                .iter()
+                .position(|b| *b == b'\n')
+                .map_or(b"".as_slice(), |i| &field[i + 1..]);
+            let path = PathBuf::from(native::os_string(path.to_vec()));
+            // --path expands ~/ but leaves a relative path relative to its config file.
+            ensure!(
+                path.is_absolute(),
+                "relative conditional config includes require stock Git"
+            );
+            // Git ignores an include whose file does not exist.
+            if !path.exists() {
+                continue;
+            }
+            let names = checked(
+                git(self.data)
+                    .args([
+                        "config",
+                        "--null",
+                        "--no-includes",
+                        "--name-only",
+                        "--list",
+                        "--file",
+                    ])
+                    .arg(&path),
+            )?
+            .stdout;
+            for name in names.split(|b| *b == 0).filter(|name| !name.is_empty()) {
+                ensure!(
+                    inert_config_key(&name.to_ascii_lowercase()),
+                    "conditional config includes that set {} require stock Git",
+                    String::from_utf8_lossy(name)
+                );
+            }
+        }
+        Ok(())
     }
 
     fn write_paths(&self, paths: &[&Path]) -> Result<()> {
@@ -309,9 +384,31 @@ impl Attributes {
     }
 }
 
+/// Identity, signing, remote and alias settings never change the bytes that
+/// checkout writes. Anything else in a conditional include delegates.
+fn inert_config_key(name: &[u8]) -> bool {
+    const SECTIONS: [&[u8]; 12] = [
+        b"user.",
+        b"author.",
+        b"committer.",
+        b"url.",
+        b"gpg.",
+        b"credential.",
+        b"push.",
+        b"pull.",
+        b"fetch.",
+        b"remote.",
+        b"branch.",
+        b"alias.",
+    ];
+    const KEYS: [&[u8]; 3] = [b"core.sshcommand", b"commit.gpgsign", b"tag.gpgsign"];
+    SECTIONS.iter().any(|section| name.starts_with(section)) || KEYS.contains(&name)
+}
+
 struct Configuration {
     autocrlf: Vec<u8>,
     eol: Vec<u8>,
+    conditional_includes: bool,
 }
 
 impl Configuration {
@@ -323,15 +420,15 @@ impl Configuration {
         let mut result = Self {
             autocrlf: b"false".to_vec(),
             eol: b"native".to_vec(),
+            conditional_includes: false,
         };
         for field in bytes.split(|b| *b == 0).filter(|field| !field.is_empty()) {
             let split = field.iter().position(|b| *b == b'\n');
             let (key, value) =
                 split.map_or((field, b"".as_slice()), |i| (&field[..i], &field[i + 1..]));
-            ensure!(
-                !key.starts_with(b"includeif."),
-                "conditional config includes require stock Git"
-            );
+            if key.starts_with(b"includeif.") {
+                result.conditional_includes = true;
+            }
             match key {
                 b"core.autocrlf" => result.autocrlf = value.to_ascii_lowercase(),
                 b"core.eol" => result.eol = value.to_ascii_lowercase(),

@@ -159,7 +159,7 @@ struct Image {
     size_gib: u64,
 }
 
-fn main() -> Result<()> {
+pub(crate) fn main() -> Result<()> {
     if env::args().any(|arg| arg == "--help") {
         println!(
             "twig-real-bench --repo label=/absolute/repo [--repo ...] --concurrency 100 --repeats 3 --output target/real-results/run.json\nSequential example: --worktrees 10 --concurrency 1 --repeats 1\nOptional: --filesystem host (retains fixtures, does not measure allocation), --revision label=COMMIT (after --repo).\nmacOS: --filesystem isolated-image or case-sensitive-image. Linux: --filesystem linux-xfs-image or linux-btrfs-image (mkfs + noninteractive sudo mount/umount required). --image-gib sets capacity (default 8). Linux images/fixtures are retained after unmount; APFS images are disposable.\nOriginal repositories are read-only inputs. Results default to target/ (not published)."
