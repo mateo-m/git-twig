@@ -309,7 +309,7 @@ fn seen_ancestor_workload(mut pid: u32, seen: &HashMap<u32, Process>) -> bool {
     }
     false
 }
-fn main() -> Result<()> {
+pub(crate) fn main() -> Result<()> {
     if env::args_os()
         .next()
         .is_some_and(|arg| Path::new(&arg).file_name() == Some(std::ffi::OsStr::new("git")))
