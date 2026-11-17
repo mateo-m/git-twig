@@ -91,6 +91,7 @@ struct Cohort {
     verified_files: usize,
     source_unchanged: bool,
     private_write_tested: bool,
+    warmup_cleanup_recovered: bool,
     private_write_file_bytes: Option<usize>,
     private_write_offset: Option<usize>,
     before: Option<Space>,
@@ -610,6 +611,7 @@ fn cohort(
     let tree = git_text(&seed, &["rev-parse", "HEAD^{tree}"])?;
     let expected = expected_files(&seed)?;
     let logical_bytes = expected.iter().map(|entry| entry.data.len() as u64).sum();
+    let mut warmup_cleanup_recovered = false;
     if options.warmup {
         let warmup = create(
             &seed,
@@ -628,12 +630,7 @@ fn cohort(
             filesystem,
             Filesystem::IsolatedImage | Filesystem::CaseSensitiveImage
         ) {
-            checked(
-                command("git", &seed)
-                    .args(["worktree", "remove", "--force"])
-                    .arg(mount.join("warmup"))
-                    .output()?,
-            )?;
+            warmup_cleanup_recovered = remove_owned_warmup(&seed, mount)?;
             // Only benchmark-owned warmup staging paths on this disposable image are removed.
             for entry in fs::read_dir(mount)? {
                 let entry = entry?;
@@ -854,6 +851,7 @@ fn cohort(
         verified_files,
         source_unchanged,
         private_write_tested: probe.is_some(),
+        warmup_cleanup_recovered,
         private_write_file_bytes: probe.map(|probe| probe.entry.data.len()),
         private_write_offset: probe.map(|probe| probe.offset),
         growth_after_create_bytes: allocation_delta(&after_create, &before),
@@ -1088,6 +1086,68 @@ fn space(mount: &Path) -> Result<Space> {
         observed_allocated_bytes: vec![],
     })
 }
+/// Called only for this cohort's newly-created warmup on a disposable image.
+/// Recover Git's observed partial ENOTEMPTY deletion before the allocation baseline;
+/// never retry a measured creation or touch an input repository's registration.
+fn remove_owned_warmup(seed: &Path, mount: &Path) -> Result<bool> {
+    let warmup = mount.join("warmup");
+    let output = command("git", seed)
+        .args(["worktree", "remove", "--force"])
+        .arg(&warmup)
+        .output()?;
+    if output.status.success() {
+        return Ok(false);
+    }
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    ensure!(
+        stderr.contains("Directory not empty"),
+        "warmup removal failed: {stderr}"
+    );
+    ensure!(
+        fs::symlink_metadata(&warmup)?.is_dir(),
+        "owned warmup changed type"
+    );
+    let remaining = fs::read_dir(&warmup)?
+        .map(|entry| entry.map(|entry| entry.file_name()))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    eprintln!(
+        "warmup cleanup recovery before measurement: {stderr}; remaining top-level entries: {remaining:?}"
+    );
+    for attempt in 0..3 {
+        match fs::remove_dir_all(&warmup) {
+            Ok(()) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => break,
+            Err(error) if attempt == 2 => return Err(error.into()),
+            Err(_) => thread::sleep(Duration::from_millis(100)),
+        }
+    }
+    // This seed and all its linked registrations belong exclusively to the image.
+    checked(
+        command("git", seed)
+            .args(["worktree", "prune", "--expire", "now"])
+            .output()?,
+    )?;
+    let listing = checked(
+        command("git", seed)
+            .args(["worktree", "list", "--porcelain", "-z"])
+            .output()?,
+    )?;
+    ensure!(
+        listing
+            .stdout
+            .split(|byte| *byte == 0)
+            .filter(|field| field.starts_with(b"worktree "))
+            .count()
+            == 1,
+        "warmup registration remains after cleanup"
+    );
+    ensure!(
+        fs::symlink_metadata(&warmup).is_err(),
+        "warmup remains before baseline"
+    );
+    Ok(true)
+}
+
 fn privileged(program: &str) -> Command {
     // Root is useful in a disposable container; never request interactive credentials.
     if env::var_os("TWIG_BENCH_ROOT").is_some() {

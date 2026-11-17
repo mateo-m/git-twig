@@ -35,6 +35,13 @@ const suite = z.discriminatedUnion("schemaVersion", [
     schemaVersion: z.literal(2),
     filesystem: z.enum(["isolated-image", "case-sensitive-image"]),
   }),
+  z.object({
+    ...suiteFields,
+    schemaVersion: z.literal(3),
+    filesystem: z.enum(["isolated-image", "case-sensitive-image"]),
+    dirty: z.literal(false),
+    failures: z.array(z.string()).length(0),
+  }),
 ]);
 const header = z.object({ repository: z.string() });
 
@@ -101,24 +108,27 @@ export const sources = [
   {
     name: "Linux kernel",
     repository: "linux",
-    file: "kernel-directory10.json",
+    file: "2026-11-17-final/linux-images.json",
   },
-  { name: "Axo", repository: "axo", file: "images.json" },
-  { name: "git-twig", repository: "twig", file: "images.json" },
-  { name: "Workers starter", repository: "workers-starter", file: "workers-starter-images-complete.json" },
+  { name: "Pulumi docs", repository: "pulumi", file: "2026-11-17-issue5/after-images.json" },
+  { name: "OpenClaw", repository: "openclaw", file: "2026-11-17-final/openclaw-images.json" },
+  { name: "Axo", repository: "axo", file: "2026-11-17-final/axo-images.json" },
+  { name: "git-twig", repository: "twig", file: "2026-11-17-final/twig-images.json" },
+  { name: "Workers starter", repository: "workers-starter", file: "2026-11-17-final/workers-starter-images.json" },
 ];
+
+export function benchmarkFile(file: string): URL {
+  return new URL(`../../../bench/results/${file}`, import.meta.url);
+}
 
 export function loadBenchmarks(): DiskComparison[] {
   return sources.map(({ name, repository, file }) => {
-    const path = new URL(
-      `../../../bench/results/2026-11-15-real/${file}`,
-      import.meta.url,
-    );
+    const path = benchmarkFile(file);
     return summarize(
       JSON.parse(readFileSync(path, "utf8")),
       repository,
       name,
-      `https://github.com/leostera/git-twig/blob/main/bench/results/2026-11-15-real/${file}`,
+      `https://github.com/leostera/git-twig/blob/main/bench/results/${file}`,
     );
   });
 }

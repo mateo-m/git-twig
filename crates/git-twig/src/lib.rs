@@ -115,6 +115,7 @@ struct Prepared {
 }
 
 fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> Result<Prepared> {
+    let started = std::time::Instant::now();
     ensure!(
         cfg!(any(target_os = "macos", target_os = "linux", windows)),
         "native CoW is supported only on macOS, Linux and Windows"
@@ -172,8 +173,9 @@ fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> 
     let destination = parent.join(destination.file_name().context("destination has no name")?);
     objects::ensure_literal_objects(&root)?;
     checkout::ensure_relocatable_worktree_config(&root)?;
-    let mut entries =
-        tree::parse(&checked(git(&root).args(["ls-tree", "-rz", "--full-tree", &commit]))?.stdout)?;
+    let mut entries = tree::parse(
+        &checked(git(&root).args(["ls-tree", "-rlz", "--full-tree", &commit]))?.stdout,
+    )?;
     ensure!(
         !entries.iter().any(|entry| entry.kind == Kind::Submodule),
         "submodules require stock Git"
@@ -217,12 +219,21 @@ fn prepare(cwd: &Path, request: &AddRequest, staging: &mut staging::Staging) -> 
     checkout.initialize(&commit)?;
     let policy = checkout.policy(&entries)?;
     let modes = native::FileModes::new(&stage)?;
+    let snapshot_started = std::time::Instant::now();
     let directories = snapshot::materialize(&root, &data, &entries, &modes)?;
+    let snapshot_elapsed = snapshot_started.elapsed();
     #[cfg(target_os = "macos")]
     trace(&format!("APFS directory clones: {directories}"));
     #[cfg(not(target_os = "macos"))]
     let _ = directories;
+    let verification_started = std::time::Instant::now();
     checkout.repair(&root, &entries, &policy)?;
+    trace(&format!(
+        "native preparation: snapshot {:.3}s; raw verification/repair {:.3}s; total {:.3}s",
+        snapshot_elapsed.as_secs_f64(),
+        verification_started.elapsed().as_secs_f64(),
+        started.elapsed().as_secs_f64()
+    ));
     Ok(Prepared {
         root,
         destination,
@@ -346,6 +357,31 @@ fn git(cwd: &Path) -> Command {
     let mut command = Command::new("git");
     command.arg("-C").arg(cwd);
     command
+}
+
+/// Drain Git output while feeding input, so large batches cannot fill both pipes.
+fn checked_with_input(command: &mut Command, input: Vec<u8>) -> Result<Output> {
+    use std::io::Write;
+    use std::process::Stdio;
+    let mut child = command
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+    let mut stdin = child.stdin.take().context("missing Git input pipe")?;
+    let writer = std::thread::spawn(move || stdin.write_all(&input));
+    let output = child.wait_with_output();
+    let written = writer
+        .join()
+        .map_err(|_| anyhow::anyhow!("Git input writer panicked"))?;
+    let output = output?;
+    ensure!(
+        output.status.success(),
+        "Git failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    written?;
+    Ok(output)
 }
 
 fn checked(command: &mut Command) -> Result<Output> {

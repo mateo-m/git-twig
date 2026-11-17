@@ -55,10 +55,10 @@ git -C main twig new -b feat/x ../feat-x HEAD
 The destination is resolved relative to main, so it is a sibling named feat-x.
 HEAD must name the source checkout's current commit for native copying.
 .SH CHECKOUT COVERAGE
-Development builds support common LF policies such as text=auto eol=lf.
+Version 0.4.0 supports common LF policies such as text=auto eol=lf.
 Private candidate bytes are compared to raw target blobs. Git materializes
 files requiring conversion or whose bytes differ; other verified files retain
-sharing. These improvements are not in the published v0.3.0 release.
+sharing. Upgrade older releases for this coverage and the filter-state fix.
 External filters, ident expansion, working-tree encodings, conditional config
 includes and relative attribute-file configuration delegate to stock Git.
 Checkout configuration and external attributes must not change during creation.

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "phase": "failed",
+  "supervisorPid": 86719,
+  "current": "linux-images.json",
+  "childPid": 90928,
+  "updatedAt": "2026-11-16T23:03:02.905Z",
+  "freeGiB": 1124.0941772460938,
+  "completed": [
+    {
+      "file": "workers-starter-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "workers-starter-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "linux-images.json",
+      "exitCode": 1,
+      "cohorts": 2,
+      "failures": [
+        "linux / twig / repeat 1: command failed: error: failed to delete '/Users/leostera/Developer/github.com/leostera/git-twig/bench-v0.4-apfs/target/real-images/1794869097395-90928/linux-twig-1.mount/warmup': Directory not empty\n"
+      ]
+    }
+  ],
+  "error": "Error: Harness stopped; retain partial results: linux-images.json"
+}

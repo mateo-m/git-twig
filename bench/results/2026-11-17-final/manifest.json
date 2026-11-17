@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-17T02:43:11.658Z",
+  "runnerCommit": "f731572ba177e93a7a8fa55fe93b5d5145ba2581",
+  "dirty": false,
+  "candidateSourceCommit": "2dabb9c975e3dd1c1767957d10cc29b166f8cea7",
+  "continuationOf": null,
+  "candidateVersion": "git-twig 0.3.0",
+  "binaries": {
+    "git-twig": {
+      "sha256": "428608b8bf13a3635a015a7ae84a67bbae273d5a081c4c9c5bf6b23493a3923a"
+    },
+    "twig-real-bench-cleanup-fix": {
+      "sha256": "44a9e1035530e71f0b07524480d241487be6bc24d0bc99b8358441ef0eea08b9"
+    },
+    "git": {
+      "sha256": "b5eaefb829ec3b61176f83ed7fddc333a9d92e762ec4e558f55baadc4314297d"
+    }
+  },
+  "baseline": "git version 2.56.1",
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5\nBuildVersion:\t\t25F71",
+  "cpu": "Apple M1 Ultra",
+  "config": [
+    {
+      "repository": "workers-starter",
+      "sourceCommit": "d0b1ee485dc1cf2bc0b2a3511cf8cf1057624d02",
+      "mode": "host",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "workers-starter-host.json"
+    },
+    {
+      "repository": "workers-starter",
+      "sourceCommit": "d0b1ee485dc1cf2bc0b2a3511cf8cf1057624d02",
+      "mode": "case-sensitive-image",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "workers-starter-images.json"
+    },
+    {
+      "repository": "twig",
+      "sourceCommit": "96c43950e4c0d8524de4ad53157c136eb222d39c",
+      "mode": "host",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "twig-host.json"
+    },
+    {
+      "repository": "twig",
+      "sourceCommit": "96c43950e4c0d8524de4ad53157c136eb222d39c",
+      "mode": "case-sensitive-image",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "twig-images.json"
+    },
+    {
+      "repository": "axo",
+      "sourceCommit": "67af816be26633039e8507d93d577b2073d6f5fd",
+      "mode": "host",
+      "count": 1,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "axo-host.json"
+    },
+    {
+      "repository": "axo",
+      "sourceCommit": "67af816be26633039e8507d93d577b2073d6f5fd",
+      "mode": "case-sensitive-image",
+      "count": 1,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 16,
+      "file": "axo-images.json"
+    },
+    {
+      "repository": "linux",
+      "sourceCommit": "23c62304dde29abe92013d85910d03a77dada35d",
+      "mode": "case-sensitive-image",
+      "count": 1,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 32,
+      "file": "linux-images.json"
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "mode": "host",
+      "count": 1,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 24,
+      "file": "openclaw-host.json"
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "mode": "case-sensitive-image",
+      "count": 1,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 24,
+      "file": "openclaw-images.json"
+    }
+  ],
+  "limits": {
+    "minimumHostFreeGiB": 128,
+    "disposableImageCapacityGiB": 32,
+    "concurrentCampaignJobs": 1
+  },
+  "notes": [
+    "Warmup cleanup fix, when selected by harness name, only changes pre-measurement cleanup; recovery is recorded per cohort. Original harness and all failed attempts are retained.",
+    "Release candidate, not a published v0.4.0 binary; source commit and binary digests identify the implementation, version string remains 0.3.0.",
+    "Stock Git baseline and candidate use the same pinned tree per pair. Prior four workload revisions are preserved. OpenClaw retains its original attributes.",
+    "Warm caches on a shared Mac; no competing builds/tests initiated by this controller. Background apps are not stopped. No cold-cache or general speed claim.",
+    "Final post-performance-fix refresh: ten sequential creates for Workers/git-twig; one create per cohort for Axo/kernel/OpenClaw. Three paired repetitions and one warmup per backend/repetition. Counts differ from the archived pre-optimization campaign; no high-concurrency throughput claim.",
+    "Host timing and isolated-image allocation are separate measurements. Kernel timing/allocation both use case-sensitive APFS images.",
+    "Filesystem image allocations include metadata/indexes and are not exclusive per-file block counts. Isolated images are disposable; host fixtures retained.",
+    "All raw failures are retained. No retries or automatic exclusion of failed observations. Final verification, native selection and private writes are outside creation timing."
+  ]
+}

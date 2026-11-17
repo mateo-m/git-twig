@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "phase": "failed",
+  "supervisorPid": 5255,
+  "current": "openclaw-host.json",
+  "childPid": 33027,
+  "updatedAt": "2026-11-17T00:03:48.355Z",
+  "freeGiB": 1118.4193534851074,
+  "completed": [
+    {
+      "file": "workers-starter-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "workers-starter-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "linux-images-retry-1.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "openclaw-host.json",
+      "exitCode": 1,
+      "cohorts": 0,
+      "failures": [
+        "openclaw / git / repeat 0: command failed: fatal: unable to read tree (410c0dda40702e25263b49b8b7d0786a5e49e366)\n"
+      ]
+    }
+  ],
+  "error": "Error: Harness stopped; retain partial results: openclaw-host.json"
+}

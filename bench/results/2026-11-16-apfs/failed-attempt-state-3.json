@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "phase": "failed",
+  "supervisorPid": 33987,
+  "current": "openclaw-images.json",
+  "childPid": 57940,
+  "updatedAt": "2026-11-17T00:44:39.936Z",
+  "freeGiB": 1073.3454360961914,
+  "completed": [
+    {
+      "file": "workers-starter-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "workers-starter-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "linux-images-retry-1.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "openclaw-host-retry-1.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "openclaw-images.json",
+      "exitCode": 1,
+      "cohorts": 2,
+      "failures": [
+        "openclaw / twig / repeat 1: command failed: error: failed to delete '/Users/leostera/Developer/github.com/leostera/git-twig/bench-v0.4-apfs/target/real-images/1794875409574-57940/openclaw-twig-1.mount/warmup': Directory not empty\n"
+      ]
+    }
+  ],
+  "error": "Error: Harness stopped; retain partial results: openclaw-images.json"
+}

@@ -1,16 +1,15 @@
 //! Target-index checkout policy and per-path recovery inside private staging.
 use crate::{
-    checked, git, native,
-    objects::Objects,
+    checked, checked_with_input as with_input, git, native,
+    objects::{self, Objects},
     output_path,
     tree::{Entry, Kind},
 };
 use anyhow::{Context, Result, ensure};
 use std::{
     collections::BTreeMap,
-    io::Write,
     path::{Path, PathBuf},
-    process::{Command, Output, Stdio},
+    process::{Command, Output},
 };
 
 /// Git copies config.worktree into a new Git directory, but not sibling include
@@ -133,12 +132,36 @@ impl<'a> Checkout<'a> {
     }
 
     pub fn repair(&self, root: &Path, entries: &[Entry], policy: &Policy) -> Result<()> {
-        let mut objects = Objects::open(root)?;
+        let regular: Vec<_> = entries
+            .iter()
+            .zip(&policy.actions)
+            .filter(|(entry, action)| {
+                **action == Action::VerifyClone && matches!(entry.kind, Kind::File { .. })
+            })
+            .map(|(entry, _)| entry)
+            .collect();
+        let mut matches = objects::hash_private_files(root, self.data, &regular)?.into_iter();
+        let mut symlink_objects = None;
         let mut attributes = Vec::new();
         let mut files = Vec::new();
         let mut verified = 0;
         for (entry, action) in entries.iter().zip(&policy.actions) {
-            if *action == Action::VerifyClone && objects.matches(self.data, entry)? {
+            let equal = match (*action, entry.kind) {
+                (Action::VerifyClone, Kind::File { .. }) => {
+                    matches.next().expect("one hash verdict per regular file")
+                }
+                (Action::VerifyClone, Kind::Symlink) => {
+                    if symlink_objects.is_none() {
+                        symlink_objects = Some(Objects::open(root)?);
+                    }
+                    symlink_objects
+                        .as_mut()
+                        .expect("opened object stream")
+                        .matches(self.data, entry)?
+                }
+                _ => false,
+            };
+            if equal {
                 if matches!(entry.kind, Kind::File { .. }) {
                     verified += 1;
                 }
@@ -337,24 +360,6 @@ fn paths<'a>(paths: impl Iterator<Item = &'a Path>) -> Vec<u8> {
         .collect()
 }
 
-fn with_input(command: &mut Command, input: Vec<u8>) -> Result<Output> {
-    let mut child = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    let mut stdin = child.stdin.take().context("missing Git input pipe")?;
-    // Read concurrently so large inventories/attribute output cannot fill both pipes.
-    let writer = std::thread::spawn(move || stdin.write_all(&input));
-    let output = child.wait_with_output();
-    let written = writer
-        .join()
-        .map_err(|_| anyhow::anyhow!("Git input writer panicked"))?;
-    let output = checked_output(output?)?;
-    written?;
-    Ok(output)
-}
-
 fn checked_output(output: Output) -> Result<Output> {
     ensure!(
         output.status.success(),
@@ -370,7 +375,7 @@ mod tests {
     #[test]
     fn absence_is_not_a_literal_attribute_state() -> Result<()> {
         let entries =
-            crate::tree::parse(b"100644 blob 0000000000000000000000000000000000000000\tfile\0")?;
+            crate::tree::parse(b"100644 blob 0000000000000000000000000000000000000000 6\tfile\0")?;
         let config = Configuration::parse(b"")?;
         for value in ["unset", "unspecified", "set", "upper"] {
             assert!(

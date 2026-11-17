@@ -1,7 +1,8 @@
 import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig, type Plugin } from "vite";
-import { loadBenchmarks, sources } from "./scripts/benchmarks.ts";
+import { fileURLToPath } from "node:url";
+import { benchmarkFile, loadBenchmarks, sources } from "./scripts/benchmarks.ts";
 
 const virtualId = "virtual:twig-benchmarks";
 function benchmarkData(): Plugin {
@@ -13,12 +14,7 @@ function benchmarkData(): Plugin {
     load(id) {
       if (id !== "\0" + virtualId) return;
       for (const { file } of sources)
-        this.addWatchFile(
-          new URL(
-            `../../bench/results/2026-11-15-real/${file}`,
-            import.meta.url,
-          ).pathname,
-        );
+        this.addWatchFile(fileURLToPath(benchmarkFile(file)));
       return `export default ${JSON.stringify(loadBenchmarks())}`;
     },
   };

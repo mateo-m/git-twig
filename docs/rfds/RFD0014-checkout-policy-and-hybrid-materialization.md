@@ -19,6 +19,11 @@ its filter guard for drivers with those names. Query `--all`: genuine absence
 is omitted, while literal values remain present. Conservatively delegate the
 whole request when filter, ident or working-tree-encoding attributes are present.
 
+The regular-file verifier is subsequently optimized by
+[RFD0015](RFD0015-batched-raw-object-verification.md): raw Git blob hashing of
+private files replaces streaming target blob contents, preserving object-identity
+verification without filter normalization or stat-cache trust.
+
 ## Guide-level contract
 
 `git twig new -b feat/x ../feat-x HEAD` may now share files in repositories using

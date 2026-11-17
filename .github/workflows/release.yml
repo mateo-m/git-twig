@@ -26,7 +26,7 @@ jobs:
           cargo test --workspace --locked
           cargo build --release --locked -p git-twig --target ${{ matrix.target }}
           mkdir -p package dist
-          cp target/${{ matrix.target }}/release/git-twig LICENSE README.md crates/git-twig/man/git-twig.1 package/
+          cp target/${{ matrix.target }}/release/git-twig LICENSE README.md CHANGELOG.md crates/git-twig/man/git-twig.1 package/
           tar -czf dist/git-twig-${GITHUB_REF_NAME}-${{ matrix.target }}.tar.gz -C package .
       - uses: actions/upload-artifact@v4
         with:
@@ -50,7 +50,8 @@ jobs:
           sha256sum dist/*.tar.gz > dist/SHA256SUMS
           python3 scripts/release-formula.py "${GITHUB_REF_NAME#v}" dist > Formula/git-twig.rb
           cp Formula/git-twig.rb dist/git-twig.rb
-          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes
+          python3 scripts/release-notes.py "${GITHUB_REF_NAME#v}" > "$RUNNER_TEMP/release-notes.md"
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/git-twig.rb

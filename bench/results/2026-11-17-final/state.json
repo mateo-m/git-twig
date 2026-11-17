@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "phase": "finished",
+  "supervisorPid": 5070,
+  "current": "openclaw-images.json",
+  "childPid": null,
+  "updatedAt": "2026-11-17T03:13:43.466Z",
+  "freeGiB": 1004.1062660217285,
+  "completed": [
+    {
+      "file": "workers-starter-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "workers-starter-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "twig-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "axo-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "linux-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "openclaw-host.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "file": "openclaw-images.json",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    }
+  ]
+}

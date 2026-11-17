@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-16T23:11:56.436Z",
+  "runnerCommit": "cdcc5576ca275be63239c0dfb3422c3174c7a43c",
+  "dirty": false,
+  "candidateSourceCommit": "47c92163c3ca8b59eee76fa546f86eef826780a7",
+  "continuationOf": {
+    "manifestSha256": "14ac1e99b5cdf3552021ebd107f697e8025e7e3c400c2c72b03ecf9319543e76",
+    "state": "failed-attempt-state.json",
+    "reason": "Retain failed setup attempt; rerun the entire incomplete job on fresh images using identical frozen binaries."
+  },
+  "candidateVersion": "git-twig 0.3.0",
+  "binaries": {
+    "git-twig": {
+      "sha256": "9916736195543fed930e9da1b26618e7b9b039cc6983f7d4391a0eb16de58698"
+    },
+    "twig-real-bench": {
+      "sha256": "4e37239732ce4dc77c628eaaac7a28fbdfb49a1bcbe0269bdfb88865176059da"
+    },
+    "git": {
+      "sha256": "b5eaefb829ec3b61176f83ed7fddc333a9d92e762ec4e558f55baadc4314297d"
+    }
+  },
+  "baseline": "git version 2.56.1",
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5\nBuildVersion:\t\t25F71",
+  "cpu": "Apple M1 Ultra",
+  "config": [
+    {
+      "repository": "linux",
+      "sourceCommit": "23c62304dde29abe92013d85910d03a77dada35d",
+      "mode": "case-sensitive-image",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 32,
+      "file": "linux-images-retry-1.json"
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "mode": "host",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 24,
+      "file": "openclaw-host.json"
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "mode": "case-sensitive-image",
+      "count": 10,
+      "concurrency": 1,
+      "repeats": 3,
+      "capacity": 24,
+      "file": "openclaw-images.json"
+    }
+  ],
+  "limits": {
+    "minimumHostFreeGiB": 128,
+    "disposableImageCapacityGiB": 32,
+    "concurrentCampaignJobs": 1
+  },
+  "notes": [
+    "Release candidate, not a published v0.4.0 binary; source commit and binary digests identify the implementation, version string remains 0.3.0.",
+    "Stock Git baseline and candidate use the same pinned tree per pair. Prior four workload revisions are preserved. OpenClaw retains its original attributes.",
+    "Warm caches on a shared Mac; no competing builds/tests initiated by this controller. Background apps are not stopped. No cold-cache or general speed claim.",
+    "100-way/100-worktree cohorts for Workers/git-twig/Axo; ten sequential creates for kernel/OpenClaw. Three paired repetitions and one warmup per backend/repetition.",
+    "Host timing and isolated-image allocation are separate measurements. Kernel timing/allocation both use case-sensitive APFS images.",
+    "Filesystem image allocations include metadata/indexes and are not exclusive per-file block counts. Isolated images are disposable; host fixtures retained.",
+    "All raw failures are retained. No retries or automatic exclusion of failed observations. Final verification, native selection and private writes are outside creation timing."
+  ]
+}

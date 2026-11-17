@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "inputCommit": "430261138aa08539cd598b9269bfe8f82fd49b78",
+  "reportedTwoMinuteBaselineReproduced": false,
+  "scope": "warm-cache shared Mac; exact input commit and full-history object store",
+  "criteria": {
+    "maximumMedianCreateSlowdownVsGit": 2.0,
+    "wrongCheckouts": 0,
+    "sourceMutations": 0
+  },
+  "environments": {
+    "host": {
+      "samplesPerArm": 3,
+      "stockGitMedianCreateMs": 4324.303875,
+      "beforeTwigMedianCreateMs": 5987.646374999999,
+      "afterTwigMedianCreateMs": 3641.3003750000003,
+      "afterVsGitMedianCreateRatio": 0.8420546937164541,
+      "criterionPassed": true
+    },
+    "case-sensitive-image": {
+      "samplesPerArm": 3,
+      "stockGitMedianCreateMs": 5046.1648749999995,
+      "beforeTwigMedianCreateMs": 7454.452875,
+      "afterTwigMedianCreateMs": 5734.310292,
+      "afterVsGitMedianCreateRatio": 1.136369982758441,
+      "criterionPassed": true,
+      "stockGitMedianAllocationBytes": 1297702912,
+      "afterTwigMedianAllocationBytes": 8327168
+    }
+  },
+  "verifiedMeasuredCreates": 18
+}

@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "2dabb9c975e3dd1c1767957d10cc29b166f8cea7",
+  "rust": "1.95.0",
+  "git": "2.40.0",
+  "environment": "linux/amd64 Rust container on Apple Silicon Docker VM; correctness evidence, not native-CPU performance evidence",
+  "strictClippy": true,
+  "workspaceTests": true,
+  "nativeRequiredFilesystems": [
+    "XFS",
+    "Btrfs"
+  ],
+  "integrationTestsPerFilesystem": 67,
+  "setupCorrection": "Initial container host run failed solely because no man viewer was installed. Installed man-db, then reran the host workspace suite and both native filesystems successfully; no product code change for that setup failure.",
+  "versionRecheck": "0.4.0",
+  "parallelRegression": "520 distinct-OID files; asserts worker count so length-mismatch rejection cannot accidentally disable parallel coverage",
+  "testFileSHA256": "aee19932f863c40bda263cd4f38ea3495a77f120b72f1c97925b0db308f1d311"
+}

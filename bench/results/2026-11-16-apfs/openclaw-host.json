@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 3,
+  "filesystem": "host",
+  "imageSizeGib": null,
+  "warmup": true,
+  "selectedBackend": null,
+  "suite": "real-image-cohort",
+  "generatedAtUnixMs": 1794873823382,
+  "commit": "cdcc5576ca275be63239c0dfb3422c3174c7a43c",
+  "dirty": false,
+  "candidateSha256": "9916736195543fed930e9da1b26618e7b9b039cc6983f7d4391a0eb16de58698",
+  "gitVersion": "git version 2.56.1",
+  "platform": "macos aarch64 25.5.0",
+  "cpu": "Apple M1 Ultra",
+  "concurrency": 1,
+  "worktreesPerCohort": 10,
+  "repeats": 3,
+  "repositories": [
+    {
+      "label": "openclaw",
+      "commit": "410c0dda40702e25263b49b8b7d0786a5e49e366"
+    }
+  ],
+  "notes": [
+    "Each image-backed backend/repeat gets a fresh, isolated sparse filesystem image (capacity/format recorded in imageSizeGiB/filesystem). Seed uses git clone --shared --no-checkout plus explicit pinned-commit checkout. Original repositories and object stores are read-only inputs; seed history uses alternates outside image.",
+    "One operation warmup per backend; removed before APFS space snapshots, retained on Linux and host. Global/system Git config and hooks disabled for fixture setup; no ignored/untracked dependencies or build output copied. Backend order alternates by repeat.",
+    "A barrier releases the bounded worker pool simultaneously; each worker starts its next queued create only after its previous CLI returns. worktreesPerCohort is the total count; concurrency is the maximum in flight. Create wall time includes thread startup/barrier and ends at the last CLI completion, excluding final coordinator checkpoint/join work. Per-operation latency measures only that CLI. harnessCpuMsDuringCreate records self CPU (coordinator and worker threads), excluding CLI child CPU. No verification/generation competes with creates. No retries: failures are data.",
+    "First git status is measured sequentially after all creates and the initial space snapshot. Full byte/symlink/executable verification follows each first status; its CPU is outside creation timing. A first-status sum is not a concurrent-status wall time.",
+    "Allocated space is total minus free blocks from statvfs on the isolated filesystem, sampled after sync until stable (or marked unstable). This includes working files, indexes, retained staging and filesystem metadata, not logical size/du/st_blocks. Host sparse-image allocation is not the metric.",
+    "After initial verification/space measurement, one data-bearing byte in one nonempty regular file per successful checkout (offset and file length recorded) is changed in place. Additional filesystem allocation is sampled; seed file must remain unchanged. APFS images are detached and deleted after saving each cohort; Linux images and fixtures are retained after unmount; no benchmark input paths or source file contents are serialized.",
+    "Local warm-cache results. A sparse loopback/disk image is a controlled filesystem, not a claim about native host-volume maximum throughput. Report failures alongside latency and allocation; do not compare unequal successful counts as identical capacity.",
+    "Filesystem=host overrides image setup/cleanup notes: fresh cohort directories and warmup worktrees are retained, no allocation snapshots/deltas are reported, no sync is forced. Use isolated-image runs for space comparisons. Input revisions can be pinned to match earlier image runs."
+  ],
+  "cohorts": [],
+  "failures": [
+    "openclaw / git / repeat 0: command failed: fatal: unable to read tree (410c0dda40702e25263b49b8b7d0786a5e49e366)\n"
+  ]
+}

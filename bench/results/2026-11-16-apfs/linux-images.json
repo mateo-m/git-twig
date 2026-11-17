@@ -1,0 +1,399 @@
+{
+  "schemaVersion": 3,
+  "filesystem": "case-sensitive-image",
+  "imageSizeGib": 32,
+  "warmup": true,
+  "selectedBackend": null,
+  "suite": "real-image-cohort",
+  "generatedAtUnixMs": 1794869097395,
+  "commit": "0ae69ca00e21911e64a81c3dd2040eeca3fbbf31",
+  "dirty": false,
+  "candidateSha256": "9916736195543fed930e9da1b26618e7b9b039cc6983f7d4391a0eb16de58698",
+  "gitVersion": "git version 2.56.1",
+  "platform": "macos aarch64 25.5.0",
+  "cpu": "Apple M1 Ultra",
+  "concurrency": 1,
+  "worktreesPerCohort": 10,
+  "repeats": 3,
+  "repositories": [
+    {
+      "label": "linux",
+      "commit": "23c62304dde29abe92013d85910d03a77dada35d"
+    }
+  ],
+  "notes": [
+    "Each image-backed backend/repeat gets a fresh, isolated sparse filesystem image (capacity/format recorded in imageSizeGiB/filesystem). Seed uses git clone --shared --no-checkout plus explicit pinned-commit checkout. Original repositories and object stores are read-only inputs; seed history uses alternates outside image.",
+    "One operation warmup per backend; removed before APFS space snapshots, retained on Linux and host. Global/system Git config and hooks disabled for fixture setup; no ignored/untracked dependencies or build output copied. Backend order alternates by repeat.",
+    "A barrier releases the bounded worker pool simultaneously; each worker starts its next queued create only after its previous CLI returns. worktreesPerCohort is the total count; concurrency is the maximum in flight. Create wall time includes thread startup/barrier and ends at the last CLI completion, excluding final coordinator checkpoint/join work. Per-operation latency measures only that CLI. harnessCpuMsDuringCreate records self CPU (coordinator and worker threads), excluding CLI child CPU. No verification/generation competes with creates. No retries: failures are data.",
+    "First git status is measured sequentially after all creates and the initial space snapshot. Full byte/symlink/executable verification follows each first status; its CPU is outside creation timing. A first-status sum is not a concurrent-status wall time.",
+    "Allocated space is total minus free blocks from statvfs on the isolated filesystem, sampled after sync until stable (or marked unstable). This includes working files, indexes, retained staging and filesystem metadata, not logical size/du/st_blocks. Host sparse-image allocation is not the metric.",
+    "After initial verification/space measurement, one data-bearing byte in one nonempty regular file per successful checkout (offset and file length recorded) is changed in place. Additional filesystem allocation is sampled; seed file must remain unchanged. APFS images are detached and deleted after saving each cohort; Linux images and fixtures are retained after unmount; no benchmark input paths or source file contents are serialized.",
+    "Local warm-cache results. A sparse loopback/disk image is a controlled filesystem, not a claim about native host-volume maximum throughput. Report failures alongside latency and allocation; do not compare unequal successful counts as identical capacity."
+  ],
+  "cohorts": [
+    {
+      "repository": "linux",
+      "sourceCommit": "23c62304dde29abe92013d85910d03a77dada35d",
+      "sourceTree": "78c11a69c8b8226b0cefc40082c0cdc8030b2f8b",
+      "backend": "git",
+      "repeat": 0,
+      "trackedFiles": 97371,
+      "logicalBytesPerWorktree": 1676008970,
+      "createWallMs": 198468.20141699997,
+      "harnessCpuMsDuringCreate": 26.77500000000009,
+      "observerWallMs": 198468.943167,
+      "createsPerSecond": 0.05038590529164457,
+      "statusAndVerificationWallMs": 141516.10595899998,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 973710,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "privateWriteFileBytes": 24313,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 2355367936,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          2355367936,
+          2355367936,
+          2355367936
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 22032642048,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          22032642048,
+          22032642048,
+          22032642048
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 22031798272,
+        "totalBytes": 34149982208,
+        "stable": false,
+        "observedAllocatedBytes": [
+          22031314944,
+          22031446016,
+          22031855616,
+          22031224832,
+          22031773696,
+          22031118336,
+          22031433728,
+          22031515648,
+          22031953920,
+          22031790080,
+          22031794176,
+          22031798272
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 22031060992,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          22031060992,
+          22031060992,
+          22031060992
+        ]
+      },
+      "growthAfterCreateBytes": 19677274112,
+      "growthAfterStatusBytes": 19676430336,
+      "privateWriteGrowthBytes": -737280,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 28565.428166,
+          "createStartedAtMs": 0.215042,
+          "createFinishedAtMs": 28565.64325,
+          "firstStatusMs": 3638.670458,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 19294.519958999997,
+          "createStartedAtMs": 28565.672583,
+          "createFinishedAtMs": 47860.192625,
+          "firstStatusMs": 1705.432875,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 18281.66875,
+          "createStartedAtMs": 47860.208833000004,
+          "createFinishedAtMs": 66141.87762500001,
+          "firstStatusMs": 1768.7550829999998,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 18255.407417000002,
+          "createStartedAtMs": 66141.89345799999,
+          "createFinishedAtMs": 84397.300958,
+          "firstStatusMs": 1913.6825,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 18483.244917,
+          "createStartedAtMs": 84397.31633300001,
+          "createFinishedAtMs": 102880.561333,
+          "firstStatusMs": 1743.521083,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 18808.951875,
+          "createStartedAtMs": 102880.57887499999,
+          "createFinishedAtMs": 121689.53083300001,
+          "firstStatusMs": 1534.5769169999999,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 18369.55475,
+          "createStartedAtMs": 121689.54616700001,
+          "createFinishedAtMs": 140059.101,
+          "firstStatusMs": 1998.784417,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 19003.806292,
+          "createStartedAtMs": 140059.116458,
+          "createFinishedAtMs": 159062.922792,
+          "firstStatusMs": 1854.982041,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 18908.678167000002,
+          "createStartedAtMs": 159062.9405,
+          "createFinishedAtMs": 177971.61875,
+          "firstStatusMs": 1984.852625,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 20496.56075,
+          "createStartedAtMs": 177971.640458,
+          "createFinishedAtMs": 198468.20141699997,
+          "firstStatusMs": 1865.860458,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "linux",
+      "sourceCommit": "23c62304dde29abe92013d85910d03a77dada35d",
+      "sourceTree": "78c11a69c8b8226b0cefc40082c0cdc8030b2f8b",
+      "backend": "twig",
+      "repeat": 0,
+      "trackedFiles": 97371,
+      "logicalBytesPerWorktree": 1676008970,
+      "createWallMs": 237366.334583,
+      "harnessCpuMsDuringCreate": 10.527000000001863,
+      "observerWallMs": 237366.71225,
+      "createsPerSecond": 0.04212897341810406,
+      "statusAndVerificationWallMs": 278166.500542,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 973710,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "privateWriteFileBytes": 24313,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 2353569792,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          2353569792,
+          2353569792,
+          2353569792
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 2824896512,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          2824896512,
+          2824896512,
+          2824896512
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 2824929280,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          2824929280,
+          2824929280,
+          2824929280
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 2825089024,
+        "totalBytes": 34149982208,
+        "stable": true,
+        "observedAllocatedBytes": [
+          2825089024,
+          2825089024,
+          2825089024
+        ]
+      },
+      "growthAfterCreateBytes": 471326720,
+      "growthAfterStatusBytes": 471359488,
+      "privateWriteGrowthBytes": 159744,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 21047.930208,
+          "createStartedAtMs": 0.12545800000000001,
+          "createFinishedAtMs": 21048.055708,
+          "firstStatusMs": 21393.321875,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 25956.954208,
+          "createStartedAtMs": 21048.082125,
+          "createFinishedAtMs": 47005.036375,
+          "firstStatusMs": 16084.215125,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 23577.342916999998,
+          "createStartedAtMs": 47005.054583000005,
+          "createFinishedAtMs": 70582.39754100001,
+          "firstStatusMs": 17689.93625,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 22770.323083,
+          "createStartedAtMs": 70582.41649999999,
+          "createFinishedAtMs": 93352.739625,
+          "firstStatusMs": 17346.805458,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 23940.972875,
+          "createStartedAtMs": 93352.75716600001,
+          "createFinishedAtMs": 117293.730083,
+          "firstStatusMs": 16303.338334,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 26384.882542,
+          "createStartedAtMs": 117293.74520800001,
+          "createFinishedAtMs": 143678.627791,
+          "firstStatusMs": 17266.294833,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 23887.370583,
+          "createStartedAtMs": 143678.64670800001,
+          "createFinishedAtMs": 167566.017333,
+          "firstStatusMs": 18733.456167,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 22415.841582999998,
+          "createStartedAtMs": 167566.033,
+          "createFinishedAtMs": 189981.874625,
+          "firstStatusMs": 16206.3535,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 23960.110708999997,
+          "createStartedAtMs": 189981.89029100002,
+          "createFinishedAtMs": 213942.001041,
+          "firstStatusMs": 16135.867167,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 23424.315125,
+          "createStartedAtMs": 213942.019416,
+          "createFinishedAtMs": 237366.334583,
+          "firstStatusMs": 15835.002708999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "failures": [
+    "linux / twig / repeat 1: command failed: error: failed to delete '/Users/leostera/Developer/github.com/leostera/git-twig/bench-v0.4-apfs/target/real-images/1794869097395-90928/linux-twig-1.mount/warmup': Directory not empty\n"
+  ]
+}

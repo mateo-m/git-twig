@@ -1,6 +1,6 @@
 //! Differential checkout tests: stock Git's raw working tree is the oracle.
 use super::*;
-use std::io::Write;
+use std::io::{Read, Write};
 
 const LF: &[u8] = b"hello\n";
 const CRLF: &[u8] = b"hello\r\n";
@@ -223,6 +223,76 @@ fn checkout_bytes_match_git_across_line_ending_policies() -> Result<()> {
         fs::write(f.destination().join("hello.txt"), "private")?;
         assert_eq!(fs::read(f.source.join("hello.txt"))?, case.donor);
         assert!(f.stages()?.is_empty());
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn oversized_dirty_sparse_donor_is_repaired_without_reading_its_apparent_size() -> Result<()> {
+    let f = Fixture::new()?;
+    let file = fs::OpenOptions::new()
+        .write(true)
+        .open(f.source.join("hello.txt"))?;
+    file.set_len(64 * 1024 * 1024 * 1024)?;
+    let mut child = command(env!("CARGO_BIN_EXE_git-twig"), &f.source);
+    child.args(["new", "--detach", "../feature", "HEAD"]);
+    let output = checked(bounded_output(child)?)?;
+    native(&output);
+    assert_eq!(fs::read(f.destination().join("hello.txt"))?, LF);
+    assert_eq!(
+        fs::metadata(f.source.join("hello.txt"))?.len(),
+        64 * 1024 * 1024 * 1024
+    );
+    let mut prefix = [0; 6];
+    fs::File::open(f.source.join("hello.txt"))?.read_exact(&mut prefix)?;
+    assert_eq!(&prefix, LF);
+    clean(&f.destination())
+}
+
+#[test]
+fn parallel_raw_hashing_preserves_order_formats_and_dirty_file_repairs() -> Result<()> {
+    for format in ["sha1", "sha256"] {
+        let f = Fixture::with_object_format(format)?;
+        fs::create_dir(f.source.join("files"))?;
+        let content = |index: usize| {
+            let mut bytes = vec![b'x'; 128 * 1024];
+            bytes[..8].copy_from_slice(&(index as u64).to_le_bytes());
+            bytes
+        };
+        // Keep >512 eligible files and >64 MiB even after rejecting a dirty
+        // length mismatch. Distinct object IDs make reordered results visible.
+        for index in 0..520 {
+            fs::write(f.source.join(format!("files/{index:04}")), content(index))?;
+        }
+        git(&f.source, &["add", "."])?;
+        git(&f.source, &["commit", "-m", "parallel raw verification"])?;
+        fs::write(f.source.join("files/0001"), vec![b'y'; 128 * 1024])?;
+        fs::OpenOptions::new()
+            .append(true)
+            .open(f.source.join("files/0002"))?
+            .write_all(b"extra")?;
+        let output = checked(f.add()?)?;
+        native(&output);
+        let trace = String::from_utf8_lossy(&output.stderr);
+        if trace.contains("raw verification:") {
+            let workers = std::thread::available_parallelism()
+                .map_or(1, usize::from)
+                .min(4);
+            assert!(trace.contains(&format!("raw verification: {workers} Git hash workers")));
+        }
+        for index in 0..520 {
+            assert_eq!(
+                fs::read(f.destination().join(format!("files/{index:04}")))?,
+                content(index)
+            );
+        }
+        assert_eq!(
+            fs::read(f.source.join("files/0001"))?,
+            vec![b'y'; 128 * 1024]
+        );
+        fs::write(f.destination().join("files/0500"), "private")?;
+        assert_eq!(fs::read(f.source.join("files/0500"))?, content(500));
     }
     Ok(())
 }

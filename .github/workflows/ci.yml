@@ -65,7 +65,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build minimum supported Git
         run: |
-          make -C .git-minimum -j4 NO_GETTEXT=YesPlease NO_TCLTK=YesPlease \
+          # Git 2.40 predates C23: GCC 15 otherwise clashes with its unreachable() helper.
+          make -C .git-minimum -j4 CFLAGS="-O2 -std=gnu99" NO_GETTEXT=YesPlease NO_TCLTK=YesPlease \
             NO_CURL=YesPlease NO_EXPAT=YesPlease NO_OPENSSL=YesPlease \
             prefix="$RUNNER_TEMP/git-minimum" install
           echo "$RUNNER_TEMP/git-minimum/bin" >> "$GITHUB_PATH"

@@ -409,8 +409,14 @@ fn read_json(path: &str) -> Result<Value> {
 fn load(path: &str) -> Result<Value> {
     let run = read_json(path)?;
     ensure!(
-        run["suite"] == "real-apfs-cohort"
-            && (run["schemaVersion"] == 1 || run["schemaVersion"] == 2),
+        (run["suite"] == "real-apfs-cohort"
+            && (run["schemaVersion"] == 1 || run["schemaVersion"] == 2))
+            || (run["suite"] == "real-image-cohort"
+                && run["schemaVersion"] == 3
+                && matches!(
+                    run["filesystem"].as_str(),
+                    Some("host" | "isolated-image" | "case-sensitive-image")
+                )),
         "unsupported raw run"
     );
     ensure!(

@@ -20,6 +20,10 @@ test("onboards an agent and shows source-backed space savings", async ({
     "With twig, your agents can create cheap lightweight worktrees and use up to 97% less space on disk. Imagine all the worktrees you could now make!",
   );
   await page.evaluate(() => document.fonts.ready);
+  const bottomPadding = await page.locator("footer").evaluate(
+    (footer) => Number.parseFloat(getComputedStyle(footer).paddingBottom),
+  );
+  expect(bottomPadding).toBeGreaterThanOrEqual(48);
   const artworkCenter = await page.locator(".twig-mark img").evaluate(async (element) => {
     const image = element as HTMLImageElement;
     await image.decode();
@@ -64,7 +68,7 @@ test("onboards an agent and shows source-backed space savings", async ({
     page.getByRole("heading", { name: "Linux kernel", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".disk-chart")).toHaveCount(1);
-  await expect(page.locator(".repo-group")).toHaveCount(4);
+  await expect(page.locator(".repo-group")).toHaveCount(6);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

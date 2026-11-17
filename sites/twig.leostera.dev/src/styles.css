@@ -43,14 +43,14 @@ code {
 }
 .hero {
   text-align: center;
-  padding: 24px 0 28px;
+  padding: 20px 0 20px;
 }
 .twig-mark {
   display: grid;
   place-items: center;
   width: 72px;
   height: 72px;
-  margin: 0 auto 8px;
+  margin: 0 auto 4px;
   background: #eeefdf;
   border-radius: 41% 59% 54% 46% / 48% 46% 54% 52%;
   transform: rotate(-5deg);
@@ -78,7 +78,7 @@ h1 {
 }
 .description {
   max-width: 520px;
-  margin: 0 auto 20px;
+  margin: 0 auto 16px;
   font-size: 15px;
   line-height: 1.5;
   color: #626c5b;
@@ -160,13 +160,13 @@ h1 {
   background: #fffef9;
   border: 1px solid #e1e5d8;
   border-radius: 14px;
-  padding: 20px 24px;
+  padding: 16px 24px;
 }
 .disk-chart figcaption {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 .disk-chart figcaption > span {
   font-size: 14px;
@@ -178,8 +178,8 @@ h2 {
   margin: 0;
 }
 .repo-group + .repo-group {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 5px;
+  padding-top: 5px;
   border-top: 1px solid #e8ebdf;
 }
 .repo-heading {
@@ -187,12 +187,18 @@ h2 {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 h3 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 560;
   margin: 0;
+}
+.cohort-count {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6a755f;
 }
 h3 a {
   text-decoration: none;
@@ -216,7 +222,7 @@ h3 a:hover {
   gap: 10px;
 }
 .bar-row + .bar-row {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .bar-row code {
   font-size: 13px;
@@ -245,7 +251,7 @@ h3 a:hover {
   background: #85a65f;
 }
 footer {
-  padding: 20px 0 24px;
+  padding: 20px 0 calc(48px + env(safe-area-inset-bottom, 0px));
   text-align: center;
   font-size: 13px;
   color: #6a755f;

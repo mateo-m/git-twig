@@ -4,9 +4,14 @@ This log starts with one consolidated entry for the feature set available in
 v0.3.0, including features introduced in earlier releases. Future entries will
 describe changes from this baseline after they are implemented and verified.
 
-## Unreleased
+## [0.4.0] — 2026-11-17
 
 ### Fixed
+
+- Reduce regular-file verification overhead by batching unfiltered Git blob hashes
+  of private clones instead of inflating target blobs through a pipe (#5).
+- Clarify that private staging is retained only if creation fails; successful
+  creation still removes its owned staging directory.
 
 - Distinguish absent attributes from literal filter names such as `unset` and
   `unspecified`; these filters can no longer bypass native eligibility checks.
@@ -20,6 +25,9 @@ describe changes from this baseline after they are implemented and verified.
   ordinary worktree overrides and absolute includes eligible.
 
 ### Added
+
+- Bounded parallel raw hashing for large file inventories, with length-based
+  rejection of oversized dirty donors and opt-in verification phase timings.
 
 - Native coverage for supported identity-checkout policies, including
   `text=auto eol=lf` and applicable `core.autocrlf=input` configurations.
@@ -40,7 +48,7 @@ describe changes from this baseline after they are implemented and verified.
 External filters, ident expansion, working-tree encodings, conditional config
 includes and relative attribute-file configuration remain conservative
 whole-request fallbacks. Other-revision cloning, braiding and re-sharing are
-not included. No new version has been tagged or published.
+not included.
 
 ## [0.3.0] — 2026-11-16
 
@@ -93,4 +101,5 @@ not included. No new version has been tagged or published.
 - JSON listing, commit/integration queues and re-sharing existing worktrees are
   not available in this release. macOS binaries are not signed or notarized.
 
+[0.4.0]: https://github.com/leostera/git-twig/releases/tag/v0.4.0
 [0.3.0]: https://github.com/leostera/git-twig/releases/tag/v0.3.0

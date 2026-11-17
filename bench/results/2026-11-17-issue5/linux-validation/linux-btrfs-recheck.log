@@ -1,0 +1,103 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running unittests src/lib.rs (target/debug/deps/git_twig-d8f60195c7b6c783)
+
+running 11 tests
+test objects::tests::hashing_is_bounded_and_small_checkouts_stay_single_process ... ok
+test objects::tests::stdin_paths_preserve_every_byte_without_creating_extra_requests ... ok
+test objects::tests::compares_raw_bytes_and_drains_mismatches ... ok
+test tests::parses_only_the_supported_subset ... ok
+test snapshot::tests::rejects_file_directory_collisions ... ok
+test snapshot::tests::rejects_duplicate_paths ... ok
+test tree::tests::preserves_tabs_and_newlines ... ok
+test tree::tests::refuses_unsafe_paths_and_modes ... ok
+test native::tests::reflink_rejects_links_special_files_and_existing_destinations ... ok
+test objects::tests::hash_responses_are_complete_and_match_the_repository_object_format ... ok
+test checkout::tests::absence_is_not_a_literal_attribute_state ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src/main.rs (target/debug/deps/git_twig-764f100400019e14)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/worktrees.rs (target/debug/deps/worktrees-acff649fe69523ec)
+
+running 67 tests
+test cross_filesystem_reflink_failure_delegates_before_registration ... ok
+test different_commit_uses_git ... ok
+test checkout_policy::conditional_includes_and_redirected_attribute_sources_delegate ... ok
+test branch_already_in_use_is_rejected_without_source_changes ... ok
+test checkout_policy::failing_filters_run_once_through_stock_git_and_retain_failure ... ok
+test checkout_policy::oversized_dirty_sparse_donor_is_repaired_without_reading_its_apparent_size ... ok
+test concurrent_creators_do_not_overwrite_each_other ... ok
+test creates_real_clean_worktree_without_source_hardlinks ... ok
+test detached_and_no_checkout_modes ... ok
+test checkout_races::dirty_attribute_filters_are_never_executed_during_native_preparation ... ok
+test destination_setgid_directories_match_git ... ok
+test existing_destination_is_untouched ... ok
+test can_clone_a_linked_source ... ok
+test disabled_symlinks_delegate_for_root_and_nested_entries ... ok
+test dirty_source_produces_clean_commit_checkout ... ok
+test directory_clone_permissions_follow_umask_not_source_modes ... ok
+test directory_clones_filter_extras_without_following_links ... ok
+test empty_initial_commit_creates_a_clean_empty_worktree ... ok
+test failed_create_retains_private_staging_in_git_metadata ... ok
+test fallback_diagnostics::unsupported_creation_syntax_explains_the_supported_subset ... ok
+test executable_symlink_and_unusual_names ... ok
+test fallback_diagnostics::attribute_paths_are_escaped_in_diagnostics ... ok
+test help_advertises_the_skill ... ok
+test fallback_diagnostics::destination_reasons_preserve_existing_paths_and_git_parent_creation ... ok
+test checkout_policy::copied_worktree_config_keeps_absolute_includes_but_delegates_relative_ones ... ok
+test fallback_diagnostics::gitlinks_are_reported_as_submodules ... ok
+test fallback_diagnostics::environment_overrides_are_named_and_trace_is_opt_in ... ok
+test git_dispatches_short_help_outside_a_repository ... ok
+test checkout_policy::hybrid_preserves_odd_paths_modes_and_symlink_targets ... ok
+test git_help_finds_the_bundled_manual_when_installed ... ok
+test fallback_diagnostics::revision_and_sparse_checkout_have_distinct_reasons ... ok
+test git_c_main_layout_creates_a_sibling_from_head ... ok
+test checkout_policy::expansion_and_encoding_attributes_delegate_before_native_installation ... ok
+test checkout_races::policy_changes_before_and_after_registration_fail_safely ... ok
+test line_ending_conversions_use_git_per_file ... ok
+test removed_add_is_rejected_outside_a_repo_without_git ... ok
+test nested_tracked_fifo_falls_back_without_blocking_or_touching_source ... ok
+test new_delegates_revisions_and_checkout_options_to_git ... ok
+test filters_and_sparse_checkouts_delegate ... ok
+test linux_selects_reflinks_or_delegates_on_unsupported_filesystems ... ok
+test fallback_diagnostics::hooks_and_disabled_symlinks_are_identified ... ok
+test removed_add_is_rejected_without_creating_anything ... ok
+test fallback_diagnostics::attributes_name_the_path_key_and_literal_value ... ok
+test short_help_does_not_require_git_or_a_repository ... ok
+test skill_is_embedded_and_does_not_require_git ... ok
+test skill_rejects_extra_arguments_without_git ... ok
+test checkout_policy::parallel_raw_hashing_preserves_order_formats_and_dirty_file_repairs ... ok
+test linked_source_retains_failed_staging_in_the_common_git_directory ... ok
+test non_utf8_empty_large_and_sparse_files_have_private_writes ... ok
+test relative_destination_from_subdirectory_is_resolved_correctly ... ok
+test hooks_run_once_and_failure_retains_worktree ... ok
+test replaced_directory_symlink_delegates_without_traversing_it ... ok
+test passthrough_matches_git ... ok
+test respects_restrictive_umask ... ok
+test same_size_dirty_bytes_with_restored_mtime_are_not_inherited ... ok
+test sha256_repositories_create_clean_worktrees ... ok
+test legacy_crlf_attributes_cannot_hide_dirty_raw_bytes ... ok
+test successful_create_cleans_only_its_own_staging ... ok
+test staged_source_changes_are_not_inherited ... ok
+test untracked_and_ignored_files_stay_out ... ok
+test successful_dirty_source_repair_cleans_its_staging ... ok
+test checkout_policy::nested_info_global_and_worktree_configuration_match_git ... ok
+test checkout_policy::target_attributes_ignore_dirty_staged_and_untracked_source_policies ... ok
+test literal_attribute_state_names_cannot_hide_filters ... ok
+test sixteen_independent_native_creators_register_safely ... ok
+test reference_and_index_hooks_can_reenter_without_registrar_deadlock ... ok
+test checkout_policy::checkout_bytes_match_git_across_line_ending_policies ... ok
+
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.16s
+
+   Doc-tests git_twig
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

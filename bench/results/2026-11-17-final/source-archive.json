@@ -1,0 +1,8 @@
+{
+  "bundle": "../2026-11-17-issue5/candidate-sources.bundle",
+  "sha256": "0d9ec5e5887e4f765fe77b94ccbfc300e6128f326c9d6791009f7e88e0efd5d2",
+  "prerequisite": "c4e85fb",
+  "candidateSourceCommit": "2dabb9c975e3dd1c1767957d10cc29b166f8cea7",
+  "verifiedFinalCampaignCreates": 270,
+  "headlineCreatesIncludingPulumi": 282
+}

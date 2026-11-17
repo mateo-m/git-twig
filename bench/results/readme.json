@@ -1,39 +1,51 @@
 {
   "entries": [
     {
-      "name": "Workers starter",
+      "name": "Workers starter (10 sequential)",
       "repository": "workers-starter",
-      "timing": "bench/results/2026-11-15-real/workers-starter-host.json",
-      "allocation": "bench/results/2026-11-15-real/workers-starter-images-complete.json"
+      "timing": "bench/results/2026-11-17-final/workers-starter-host.json",
+      "allocation": "bench/results/2026-11-17-final/workers-starter-images.json"
     },
     {
-      "name": "git-twig",
+      "name": "git-twig (10 sequential)",
       "repository": "twig",
-      "timing": "bench/results/2026-11-15-real/host.json",
-      "allocation": "bench/results/2026-11-15-real/images.json"
+      "timing": "bench/results/2026-11-17-final/twig-host.json",
+      "allocation": "bench/results/2026-11-17-final/twig-images.json"
     },
     {
       "name": "Axo",
       "repository": "axo",
-      "timing": "bench/results/2026-11-15-real/host.json",
-      "allocation": "bench/results/2026-11-15-real/images.json"
+      "timing": "bench/results/2026-11-17-final/axo-host.json",
+      "allocation": "bench/results/2026-11-17-final/axo-images.json"
     },
     {
-      "name": "Linux kernel (10 sequential)",
+      "name": "Linux kernel",
       "repository": "linux",
-      "timing": "bench/results/2026-11-15-real/kernel-directory10.json",
-      "allocation": "bench/results/2026-11-15-real/kernel-directory10.json",
-      "input": "bench/results/2026-11-15-real/kernel-input.json"
+      "timing": "bench/results/2026-11-17-final/linux-images.json",
+      "allocation": "bench/results/2026-11-17-final/linux-images.json"
+    },
+    {
+      "name": "OpenClaw",
+      "repository": "openclaw",
+      "timing": "bench/results/2026-11-17-final/openclaw-host.json",
+      "allocation": "bench/results/2026-11-17-final/openclaw-images.json"
+    },
+    {
+      "name": "Pulumi docs",
+      "repository": "pulumi",
+      "timing": "bench/results/2026-11-17-issue5/after-host.json",
+      "allocation": "bench/results/2026-11-17-issue5/after-images.json"
     }
   ],
   "notes": [
-    "These are local, warm-cache results on a shared Mac, not universal speed guarantees. Input commits and hardware are recorded in each raw run.",
-    "The Workers starter and kernel rows use the directory-clone release (cf9b046); the git-twig and Axo rows retain the earlier per-file release measurements. See the [old/new kernel comparison](bench/results/2026-11-15-real/kernel-directory-comparison.summary.md) and [chart](bench/results/2026-11-15-real/kernel-directory-comparison.svg). One sequential local round per variant is not a stable speedup estimate.",
-    "Only tracked committed files are included in finished worktrees. Ignored dependencies and build artifacts inside bulk-cloned subtrees are pruned before registration.",
-    "For host-APFS rows, allocation was measured separately on isolated images using the same pinned trees and candidate binary. The kernel row uses matched case-sensitive APFS images for both timing and allocation. Round counts are shown.",
-    "Plain Git's nonzero failure count is an observed concurrent commondir-registration race. Failed attempts remain in the timing samples; a fast failed batch is not a complete successful cohort.",
-    "The Linux kernel row is one paired round of ten sequential creates per backend (maximum one in flight), not a hundred-way result. Its case-sensitive APFS image environment differs from the host-APFS timing rows; do not compare absolute times across workloads as if environments were identical.",
-    "Earlier kernel parallel attempts were [budget-stopped](bench/results/2026-11-15-real/kernel-n100-git-event.json) or user-interrupted ([Git](bench/results/2026-11-15-real/kernel-git-user-interrupted.json), [Twig](bench/results/2026-11-15-real/kernel-twig-user-interrupted.json)). Those artifacts are retained but their cutoff times are not completed timings or speedup baselines.",
-    "Workers starter is the unmodified cf@1.0.0-beta.32 hello-world scaffold. Timing uses three complete host rounds. Allocation uses two complete paired image rounds; the third pair is excluded because stock Git failed one commondir registration. The [full raw run](bench/results/2026-11-15-real/workers-starter-images.json) retains that failure."
+    "Warm-cache observations on a shared Apple M1 Ultra Mac using Git 2.56.1; three paired rounds per workload/backend/environment. These are not cold-cache results, load-saturation tests or universal speed guarantees.",
+    "The headline runs contain 282 verified measured creates with zero failures, independently checking raw bytes, executable modes, symlink targets, native Twig selection and source isolation after private writes. Warmups are additional and not counted as measured creates.",
+    "Workers starter and the historical git-twig workload each create ten worktrees sequentially. Axo, Linux kernel, OpenClaw and Pulumi docs each create one worktree per cohort. This refresh targets sequential creation latency after the verifier optimization, not the archived campaign's 100-way throughput. Counts and environments differ; do not compare absolute row times as identical operations.",
+    "Host-APFS timing and isolated case-sensitive APFS allocation use separate runs with identical pinned input revisions and candidate binary. Kernel time and allocation both come from case-sensitive-image cohorts. Image capacity is recorded in raw runs (Pulumi 8 GiB; other workloads 16–32 GiB). Creation excludes subsequent first-status cost, which is reported separately in the details.",
+    "OpenClaw remains pinned at 410c0dda40702e25263b49b8b7d0786a5e49e366 with text=auto eol=lf attributes unchanged. Pulumi docs uses the full-history object store at 430261138aa08539cd598b9269bfe8f82fd49b78 with its markdown eol=lf rules unchanged. No application code or dependencies from either project were executed.",
+    "The frozen executable implements the final regular-file verifier at source 2dabb9c before the version-only release bump and still reports 0.3.0. It is not the published v0.3.0 binary. Source IDs, binary SHA-256 values, input pins and complete provenance accompany the raw results. Exact source commits for both campaigns are retained in candidate-sources.bundle, based on public commit c4e85fb.",
+    "The issue-5 comparison additionally retains six pre-optimization Twig creates. All 18 issue-5 measured creates verified successfully. The reporter's two-minute baseline was not reproduced on this Mac; the local before/after comparison is not proof that the reporter had the same bottleneck. See its generated summary and raw runs.",
+    "The final harness has a separately hashed recovery for Git's partial Directory-not-empty cleanup of benchmark-owned disposable warmup fixtures. It runs outside measurement, records each recovery and verifies registration cleanup before the allocation baseline. No failed measured operation is silently retried.",
+    "The initial pre-optimization 3,780-create campaign and its failed setup attempts remain archived under bench/results/2026-11-16-apfs; November 15 results remain under 2026-11-15-real. Neither is silently overwritten or used as the optimized candidate's headline timing. See the final campaign manifest and completion record, plus the separate issue-5 manifest and summary."
   ]
 }

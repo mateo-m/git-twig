@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "phase": "finished",
+  "current": "after-images",
+  "pid": null,
+  "supervisorPid": 90433,
+  "completed": [
+    {
+      "job": "before-host",
+      "exitCode": 0,
+      "cohorts": 3,
+      "failures": []
+    },
+    {
+      "job": "after-host",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    },
+    {
+      "job": "before-images",
+      "exitCode": 0,
+      "cohorts": 3,
+      "failures": []
+    },
+    {
+      "job": "after-images",
+      "exitCode": 0,
+      "cohorts": 6,
+      "failures": []
+    }
+  ],
+  "updatedAt": "2026-11-17T02:33:23.610Z"
+}

@@ -43,13 +43,12 @@ private, never hardlinked to source. Staging lives under the common Git director
 in `twigs/staging` and is removed after success. Failed/interrupted attempts retain
 staging and may leave a partial registered worktree; inspect before retrying.
 
-## Unreleased checkout improvements
+## Checkout policies
 
-Development builds support common LF policies such as `text=auto eol=lf`.
+Version 0.4.0 supports common LF policies such as `text=auto eol=lf`.
 They compare private clones to raw target blobs and let Git write exceptional
 files, retaining sharing for the rest. External filters/encodings still delegate.
-These changes are not in the published v0.3.0 release; see the
-[changelog](CHANGELOG.md) for fixes and remaining boundaries.
+See the [changelog](CHANGELOG.md) for fixes and remaining boundaries.
 
 With `TWIG_TRACE=1`, native creation reports verified-clone and Git-written path
 counts. Delegation reports its specific cause; an attribute refusal names the
@@ -65,10 +64,12 @@ that changes Git checkout semantics rather than proving the bytes are correct.
 
 | Repo | `git worktree` | `git twig` | Improvement |
 |---|---|---|---|
-| [Workers starter](bench/results/2026-11-15-real/workers-starter-host.json) | 1.94s / 6.0 MiB | 6.41s / 3.7 MiB | 3.30× slower / **1.6× less space** |
-| [git-twig](bench/results/2026-11-15-real/host.json)† | 4.90s / 53.0 MiB | 10.13s / 7.1 MiB | 2.07× slower / **7.5× less space** |
-| [Axo](bench/results/2026-11-15-real/host.json) | 4m40s / 3.0 GiB | 2m19s / 165 MiB | 2.02× faster / **18.8× less space** |
-| [Linux kernel (10 sequential)](bench/results/2026-11-15-real/kernel-directory10.json) | 3m15s / 18.3 GiB | 4m32s / 549 MiB | 1.40× slower / **34.2× less space** |
+| [Workers starter (10 sequential)](bench/results/2026-11-17-final/workers-starter-host.json) | 456ms / 592 KiB | 4.27s / 308 KiB | 9.37× slower / **1.9× less space** |
+| [git-twig (10 sequential)](bench/results/2026-11-17-final/twig-host.json) | 422ms / 5.2 MiB | 4.18s / 508 KiB | 9.91× slower / **10.6× less space** |
+| [Axo](bench/results/2026-11-17-final/axo-host.json) | 400ms / 30.8 MiB | 948ms / 1.2 MiB | 2.37× slower / **26.7× less space** |
+| [Linux kernel](bench/results/2026-11-17-final/linux-images.json) | 40.56s / 1.8 GiB | 31.32s / 44.7 MiB | 1.29× faster / **41.9× less space** |
+| [OpenClaw](bench/results/2026-11-17-final/openclaw-host.json) | 8.58s / 919 MiB | 8.80s / 31.1 MiB | 1.03× slower / **29.5× less space** |
+| [Pulumi docs](bench/results/2026-11-17-issue5/after-host.json) | 4.32s / 1.2 GiB | 3.64s / 7.9 MiB | 1.19× faster / **155.8× less space** |
 
 Each cell is **creation time / additional disk space**. Batch sizes differ; creation excludes first status. † Includes failed Git attempts. [Setup and raw results](bench/results/readme-details.md).
 

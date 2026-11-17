@@ -7,9 +7,170 @@ use anyhow::{Context, Result, ensure};
 use std::{
     fs,
     io::{BufRead, BufReader, Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, ChildStdout, Stdio},
 };
+
+/// Hash raw PRIVATE regular files in one Git process, without inflating or copying
+/// target blobs through a pipe. Git supplies its own object format and SHA-1 collision
+/// detection. No -w, filters, index stat cache or source file is involved.
+pub fn hash_private_files(root: &Path, data: &Path, entries: &[&Entry]) -> Result<Vec<bool>> {
+    if entries.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut files = Vec::with_capacity(entries.len());
+    let mut total = 0u64;
+    for (index, &entry) in entries.iter().enumerate() {
+        ensure!(
+            matches!(entry.kind, Kind::File { .. }),
+            "raw hash input is not a regular entry"
+        );
+        let path = data.join(&entry.path);
+        let metadata = fs::symlink_metadata(&path)?;
+        ensure!(
+            metadata.is_file(),
+            "private hash candidate is not a regular file"
+        );
+        // A dirty sparse/oversized donor must not turn validation into hashing
+        // terabytes that cannot possibly match the target's known blob length.
+        if Some(metadata.len()) != entry.blob_bytes {
+            continue;
+        }
+        total = total.saturating_add(metadata.len());
+        files.push(HashFile {
+            index,
+            entry,
+            path,
+            bytes: metadata.len(),
+        });
+    }
+    if files.is_empty() {
+        return Ok(vec![false; entries.len()]);
+    }
+    let cpus = std::thread::available_parallelism().map_or(1, usize::from);
+    let workers = hash_worker_count(files.len(), total, cpus);
+    let mut batches: Vec<_> = (0..workers)
+        .map(|_| HashBatch {
+            bytes: 0,
+            files: Vec::new(),
+        })
+        .collect();
+    // Largest-first balancing avoids putting all large media blobs in one worker.
+    files.sort_unstable_by_key(|file| std::cmp::Reverse(file.bytes));
+    for file in files {
+        let batch = batches
+            .iter_mut()
+            .min_by_key(|batch| batch.bytes)
+            .expect("at least one worker");
+        batch.bytes = batch.bytes.saturating_add(file.bytes);
+        batch.files.push(file);
+    }
+    crate::trace(&format!(
+        "raw verification: {workers} Git hash workers, {total} bytes"
+    ));
+    // No other phase mutates these owned private paths until every worker joins.
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = batches
+            .iter()
+            .map(|batch| scope.spawn(move || hash_batch(root, batch)))
+            .collect();
+        let mut matched = vec![false; entries.len()];
+        for handle in handles {
+            for (index, equal) in handle
+                .join()
+                .map_err(|_| anyhow::anyhow!("raw hash worker panicked"))??
+            {
+                matched[index] = equal;
+            }
+        }
+        Ok(matched)
+    })
+}
+
+struct HashFile<'a> {
+    index: usize,
+    entry: &'a Entry,
+    path: PathBuf,
+    bytes: u64,
+}
+
+struct HashBatch<'a> {
+    bytes: u64,
+    files: Vec<HashFile<'a>>,
+}
+
+fn hash_worker_count(files: usize, bytes: u64, cpus: usize) -> usize {
+    if files >= 512 && bytes >= 64 * 1024 * 1024 {
+        cpus.clamp(1, 4)
+    } else {
+        1
+    }
+}
+
+fn hash_batch(root: &Path, batch: &HashBatch<'_>) -> Result<Vec<(usize, bool)>> {
+    if batch.files.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut input = Vec::new();
+    for file in &batch.files {
+        quote_stdin_path(&native::path_bytes(&file.path), &mut input);
+    }
+    let output = crate::checked_with_input(
+        git(root).args([
+            "--no-replace-objects",
+            "hash-object",
+            "--no-filters",
+            "--stdin-paths",
+        ]),
+        input,
+    )?;
+    let entries: Vec<_> = batch.files.iter().map(|file| file.entry).collect();
+    let matches = parse_hashes(&output.stdout, &entries)?;
+    Ok(batch
+        .files
+        .iter()
+        .zip(matches)
+        .map(|(file, equal)| (file.index, equal))
+        .collect())
+}
+
+fn parse_hashes(output: &[u8], entries: &[&Entry]) -> Result<Vec<bool>> {
+    ensure!(
+        output.last() == Some(&b'\n'),
+        "unterminated raw hash response"
+    );
+    let hashes: Vec<_> = output[..output.len() - 1]
+        .split(|byte| *byte == b'\n')
+        .collect();
+    ensure!(
+        hashes.len() == entries.len(),
+        "wrong raw hash response count"
+    );
+    hashes
+        .iter()
+        .zip(entries)
+        .map(|(hash, entry)| {
+            ensure!(
+                hash.len() == entry.object.as_str().len() && hash.iter().all(u8::is_ascii_hexdigit),
+                "invalid raw object hash from Git"
+            );
+            Ok(*hash == entry.object.as_str().as_bytes())
+        })
+        .collect()
+}
+
+fn quote_stdin_path(path: &[u8], output: &mut Vec<u8>) {
+    // hash-object --stdin-paths supports Git C quoting, not NUL separators on Git
+    // 2.40. Always quote; octal escapes preserve newline, tabs and non-UTF8 bytes.
+    output.push(b'"');
+    for &byte in path {
+        match byte {
+            b' '..=b'~' if byte != b'"' && byte != b'\\' => output.push(byte),
+            _ => output.extend_from_slice(format!("\\{byte:03o}").as_bytes()),
+        }
+    }
+    output.extend_from_slice(b"\"\n");
+}
 
 pub struct Objects {
     child: Child,
@@ -134,6 +295,50 @@ pub fn ensure_literal_objects(root: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn hashing_is_bounded_and_small_checkouts_stay_single_process() {
+        assert_eq!(hash_worker_count(500, 1024 * 1024 * 1024, 20), 1);
+        assert_eq!(hash_worker_count(1000, 1024, 20), 1);
+        assert_eq!(hash_worker_count(1000, 1024 * 1024 * 1024, 20), 4);
+        assert_eq!(hash_worker_count(1000, 1024 * 1024 * 1024, 2), 2);
+        assert_eq!(hash_worker_count(1000, 1024 * 1024 * 1024, 1), 1);
+    }
+
+    #[test]
+    fn stdin_paths_preserve_every_byte_without_creating_extra_requests() {
+        let mut input = Vec::new();
+        quote_stdin_path(b" a\n\t\"\\\xff", &mut input);
+        assert_eq!(input, b"\" a\\012\\011\\042\\134\\377\"\n");
+        assert_eq!(input.iter().filter(|byte| **byte == b'\n').count(), 1);
+    }
+
+    #[test]
+    fn hash_responses_are_complete_and_match_the_repository_object_format() -> Result<()> {
+        for size in [40, 64] {
+            let oid = "0".repeat(size);
+            let entries = crate::tree::parse(format!("100644 blob {oid} 6\tfile\0").as_bytes())?;
+            let references = [&entries[0]];
+            assert_eq!(
+                parse_hashes(format!("{oid}\n").as_bytes(), &references)?,
+                vec![true]
+            );
+            assert_eq!(
+                parse_hashes(format!("{}\n", "1".repeat(size)).as_bytes(), &references)?,
+                vec![false]
+            );
+            for invalid in [
+                oid.clone(),
+                format!("{oid}\n{oid}\n"),
+                format!("{}\n", "x".repeat(size)),
+                "missing\n".into(),
+                String::new(),
+            ] {
+                assert!(parse_hashes(invalid.as_bytes(), &references).is_err());
+            }
+        }
+        Ok(())
+    }
+
     #[test]
     fn compares_raw_bytes_and_drains_mismatches() -> Result<()> {
         for bytes in [b"".as_slice(), b"a", b"a\r\n", b"\0binary", &[7; 140000]] {

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-17T02:25:45.953Z",
+  "sourceCommit": "2dabb9c975e3dd1c1767957d10cc29b166f8cea7",
+  "dirty": false,
+  "inputCommit": "430261138aa08539cd598b9269bfe8f82fd49b78",
+  "git": "git version 2.56.1",
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5\nBuildVersion:\t\t25F71",
+  "cpu": "Apple M1 Ultra",
+  "inputObjects": "count: 0\nsize: 0 bytes\nin-pack: 912796\npacks: 1\nsize-pack: 2.62 GiB\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0 bytes",
+  "binaries": {
+    "before": "9916736195543fed930e9da1b26618e7b9b039cc6983f7d4391a0eb16de58698",
+    "after": "428608b8bf13a3635a015a7ae84a67bbae273d5a081c4c9c5bf6b23493a3923a",
+    "harness": "44a9e1035530e71f0b07524480d241487be6bc24d0bc99b8358441ef0eea08b9"
+  },
+  "config": {
+    "worktrees": 1,
+    "concurrency": 1,
+    "repeats": 3,
+    "warmup": true,
+    "imageGiB": 8,
+    "minimumHostFreeGiB": 128
+  },
+  "notes": [
+    "Same full-history input and commit in every arm; original gitattributes preserved. Warm caches, shared Mac, no competing builds/tests.",
+    "Before=pre-optimization raw-cat-file verifier; after=bounded parallel raw hash-object verifier. Stock Git appears in the after suites. No stat-cache substitution.",
+    "Creation excludes subsequent full raw content/mode/link verification and private-write/source-isolation checks. Host timing and image allocation are separate.",
+    "Original reporter's 20x result has not been reproduced on this Mac; this campaign must not be presented as reproducing it. Profiles are separate instrumented evidence, not these measurements."
+  ]
+}

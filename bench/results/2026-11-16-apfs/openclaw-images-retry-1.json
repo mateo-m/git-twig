@@ -1,0 +1,1144 @@
+{
+  "schemaVersion": 3,
+  "filesystem": "case-sensitive-image",
+  "imageSizeGib": 24,
+  "warmup": true,
+  "selectedBackend": null,
+  "suite": "real-image-cohort",
+  "generatedAtUnixMs": 1794876935199,
+  "commit": "6eaa016a7b58200d201e643b2397fd609c6026d6",
+  "dirty": false,
+  "candidateSha256": "9916736195543fed930e9da1b26618e7b9b039cc6983f7d4391a0eb16de58698",
+  "gitVersion": "git version 2.56.1",
+  "platform": "macos aarch64 25.5.0",
+  "cpu": "Apple M1 Ultra",
+  "concurrency": 1,
+  "worktreesPerCohort": 10,
+  "repeats": 3,
+  "repositories": [
+    {
+      "label": "openclaw",
+      "commit": "410c0dda40702e25263b49b8b7d0786a5e49e366"
+    }
+  ],
+  "notes": [
+    "Each image-backed backend/repeat gets a fresh, isolated sparse filesystem image (capacity/format recorded in imageSizeGiB/filesystem). Seed uses git clone --shared --no-checkout plus explicit pinned-commit checkout. Original repositories and object stores are read-only inputs; seed history uses alternates outside image.",
+    "One operation warmup per backend; removed before APFS space snapshots, retained on Linux and host. Global/system Git config and hooks disabled for fixture setup; no ignored/untracked dependencies or build output copied. Backend order alternates by repeat.",
+    "A barrier releases the bounded worker pool simultaneously; each worker starts its next queued create only after its previous CLI returns. worktreesPerCohort is the total count; concurrency is the maximum in flight. Create wall time includes thread startup/barrier and ends at the last CLI completion, excluding final coordinator checkpoint/join work. Per-operation latency measures only that CLI. harnessCpuMsDuringCreate records self CPU (coordinator and worker threads), excluding CLI child CPU. No verification/generation competes with creates. No retries: failures are data.",
+    "First git status is measured sequentially after all creates and the initial space snapshot. Full byte/symlink/executable verification follows each first status; its CPU is outside creation timing. A first-status sum is not a concurrent-status wall time.",
+    "Allocated space is total minus free blocks from statvfs on the isolated filesystem, sampled after sync until stable (or marked unstable). This includes working files, indexes, retained staging and filesystem metadata, not logical size/du/st_blocks. Host sparse-image allocation is not the metric.",
+    "After initial verification/space measurement, one data-bearing byte in one nonempty regular file per successful checkout (offset and file length recorded) is changed in place. Additional filesystem allocation is sampled; seed file must remain unchanged. APFS images are detached and deleted after saving each cohort; Linux images and fixtures are retained after unmount; no benchmark input paths or source file contents are serialized.",
+    "Local warm-cache results. A sparse loopback/disk image is a controlled filesystem, not a claim about native host-volume maximum throughput. Report failures alongside latency and allocation; do not compare unequal successful counts as identical capacity."
+  ],
+  "cohorts": [
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "git",
+      "repeat": 0,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 164534.435,
+      "harnessCpuMsDuringCreate": 27.323999999999614,
+      "observerWallMs": 164534.76258399998,
+      "createsPerSecond": 0.060777550912062876,
+      "statusAndVerificationWallMs": 96582.351375,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": false,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1249710080,
+        "totalBytes": 25560047616,
+        "stable": false,
+        "observedAllocatedBytes": [
+          1249431552,
+          1249681408,
+          1250111488,
+          1250140160,
+          1249689600,
+          1250004992,
+          1250234368,
+          1250463744,
+          1249808384,
+          1250390016,
+          1249607680,
+          1249710080
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 10888413184,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10888413184,
+          10888413184,
+          10888413184
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 10882084864,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10882482176,
+          10882080768,
+          10882084864,
+          10882084864,
+          10882084864
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 10881605632,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10881605632,
+          10881605632,
+          10881605632
+        ]
+      },
+      "growthAfterCreateBytes": 9638703104,
+      "growthAfterStatusBytes": 9632374784,
+      "privateWriteGrowthBytes": -479232,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 23844.005708,
+          "createStartedAtMs": 0.054167,
+          "createFinishedAtMs": 23844.059917,
+          "firstStatusMs": 2124.2482919999998,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 20568.684708,
+          "createStartedAtMs": 23844.082959000003,
+          "createFinishedAtMs": 44412.76775,
+          "firstStatusMs": 1418.3341249999999,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 13816.855541,
+          "createStartedAtMs": 44412.782459,
+          "createFinishedAtMs": 58229.638042,
+          "firstStatusMs": 2682.6343330000004,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 14080.207875,
+          "createStartedAtMs": 58229.653834,
+          "createFinishedAtMs": 72309.86179200001,
+          "firstStatusMs": 2621.282375,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 12900.710584,
+          "createStartedAtMs": 72309.878125,
+          "createFinishedAtMs": 85210.58875,
+          "firstStatusMs": 1963.768084,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 13831.391375000001,
+          "createStartedAtMs": 85210.606,
+          "createFinishedAtMs": 99041.99737499999,
+          "firstStatusMs": 2688.575666,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 20311.578458,
+          "createStartedAtMs": 99042.012542,
+          "createFinishedAtMs": 119353.591042,
+          "firstStatusMs": 1870.6985419999999,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 15871.660458,
+          "createStartedAtMs": 119353.60716700001,
+          "createFinishedAtMs": 135225.267667,
+          "firstStatusMs": 2576.438,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 14951.602458,
+          "createStartedAtMs": 135225.284292,
+          "createFinishedAtMs": 150176.886792,
+          "firstStatusMs": 2287.019791,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 14357.529792,
+          "createStartedAtMs": 150176.905167,
+          "createFinishedAtMs": 164534.435,
+          "firstStatusMs": 1090.65375,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "twig",
+      "repeat": 0,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 162173.61554199998,
+      "harnessCpuMsDuringCreate": 11.065000000002328,
+      "observerWallMs": 162174.014292,
+      "createsPerSecond": 0.06166231150843513,
+      "statusAndVerificationWallMs": 219381.706417,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": false,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1248034816,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1248034816,
+          1248034816,
+          1248034816
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 1570844672,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570844672,
+          1570844672,
+          1570844672
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 1570902016,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570902016,
+          1570902016,
+          1570902016
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 1570938880,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570938880,
+          1570938880,
+          1570938880
+        ]
+      },
+      "growthAfterCreateBytes": 322809856,
+      "growthAfterStatusBytes": 322867200,
+      "privateWriteGrowthBytes": 36864,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 15827.043833,
+          "createStartedAtMs": 0.108584,
+          "createFinishedAtMs": 15827.152417000001,
+          "firstStatusMs": 13457.778584,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 15299.060292,
+          "createStartedAtMs": 15827.19125,
+          "createFinishedAtMs": 31126.251624999997,
+          "firstStatusMs": 13641.647667000001,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 15456.426875,
+          "createStartedAtMs": 31126.26975,
+          "createFinishedAtMs": 46582.696625,
+          "firstStatusMs": 13560.903166999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 15491.947708,
+          "createStartedAtMs": 46582.715084,
+          "createFinishedAtMs": 62074.662834,
+          "firstStatusMs": 13406.568,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 16058.669625,
+          "createStartedAtMs": 62074.679334,
+          "createFinishedAtMs": 78133.349042,
+          "firstStatusMs": 21052.176417,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 15682.218958,
+          "createStartedAtMs": 78133.36520900001,
+          "createFinishedAtMs": 93815.584209,
+          "firstStatusMs": 13720.190625000001,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 17749.459833,
+          "createStartedAtMs": 93815.602709,
+          "createFinishedAtMs": 111565.062584,
+          "firstStatusMs": 13245.58825,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 15499.5425,
+          "createStartedAtMs": 111565.0775,
+          "createFinishedAtMs": 127064.62033399999,
+          "firstStatusMs": 13576.054125,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 18784.629917,
+          "createStartedAtMs": 127064.63954199999,
+          "createFinishedAtMs": 145849.269459,
+          "firstStatusMs": 13375.709375,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 16324.332166000002,
+          "createStartedAtMs": 145849.283334,
+          "createFinishedAtMs": 162173.61554199998,
+          "firstStatusMs": 13888.231667,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "twig",
+      "repeat": 1,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 177295.199166,
+      "harnessCpuMsDuringCreate": 11.470999999990454,
+      "observerWallMs": 177295.822791,
+      "createsPerSecond": 0.05640310649718769,
+      "statusAndVerificationWallMs": 248995.30125000002,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": true,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1248276480,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1248276480,
+          1248276480,
+          1248276480
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 1570246656,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570246656,
+          1570246656,
+          1570246656
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 1570254848,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570254848,
+          1570254848,
+          1570254848
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 1570291712,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1570291712,
+          1570291712,
+          1570291712
+        ]
+      },
+      "growthAfterCreateBytes": 321970176,
+      "growthAfterStatusBytes": 321978368,
+      "privateWriteGrowthBytes": 36864,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 15844.87925,
+          "createStartedAtMs": 0.182208,
+          "createFinishedAtMs": 15845.061541,
+          "firstStatusMs": 12680.820582999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 18134.732834000002,
+          "createStartedAtMs": 15845.081666,
+          "createFinishedAtMs": 33979.814541,
+          "firstStatusMs": 13181.46475,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 16801.256625,
+          "createStartedAtMs": 33979.831416,
+          "createFinishedAtMs": 50781.088040999995,
+          "firstStatusMs": 13067.771042,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 22090.969333,
+          "createStartedAtMs": 50781.10625,
+          "createFinishedAtMs": 72872.075583,
+          "firstStatusMs": 13152.28225,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 16296.261416,
+          "createStartedAtMs": 72872.09174999999,
+          "createFinishedAtMs": 89168.353208,
+          "firstStatusMs": 15995.072417,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 16068.917792,
+          "createStartedAtMs": 89168.369708,
+          "createFinishedAtMs": 105237.287541,
+          "firstStatusMs": 14327.625624999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 16646.585084000002,
+          "createStartedAtMs": 105237.304916,
+          "createFinishedAtMs": 121883.890041,
+          "firstStatusMs": 13766.388417,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 21474.949333,
+          "createStartedAtMs": 121883.90525,
+          "createFinishedAtMs": 143358.85462499998,
+          "firstStatusMs": 15947.599209,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 17104.611333,
+          "createStartedAtMs": 143358.86925,
+          "createFinishedAtMs": 160463.480625,
+          "firstStatusMs": 13346.959375,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 16831.702875000003,
+          "createStartedAtMs": 160463.49625,
+          "createFinishedAtMs": 177295.199166,
+          "firstStatusMs": 20331.647917000002,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "git",
+      "repeat": 1,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 213781.681958,
+      "harnessCpuMsDuringCreate": 28.12600000000384,
+      "observerWallMs": 213782.02079100002,
+      "createsPerSecond": 0.04677669250429333,
+      "statusAndVerificationWallMs": 158724.934959,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": false,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1250066432,
+        "totalBytes": 25560047616,
+        "stable": false,
+        "observedAllocatedBytes": [
+          1250480128,
+          1250406400,
+          1250443264,
+          1250033664,
+          1250508800,
+          1250504704,
+          1250193408,
+          1249857536,
+          1249718272,
+          1249734656,
+          1250066432,
+          1250066432
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 10887327744,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10887327744,
+          10887327744,
+          10887327744
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 10882375680,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10882224128,
+          10882764800,
+          10882695168,
+          10882179072,
+          10882523136,
+          10882371584,
+          10882375680,
+          10882375680,
+          10882375680
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 10881835008,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10881835008,
+          10881835008,
+          10881835008
+        ]
+      },
+      "growthAfterCreateBytes": 9637261312,
+      "growthAfterStatusBytes": 9632309248,
+      "privateWriteGrowthBytes": -540672,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 18025.82,
+          "createStartedAtMs": 0.055083,
+          "createFinishedAtMs": 18025.875165999998,
+          "firstStatusMs": 1518.602667,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 70417.078041,
+          "createStartedAtMs": 18025.891625,
+          "createFinishedAtMs": 88442.969791,
+          "firstStatusMs": 2130.295125,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 22457.604540999997,
+          "createStartedAtMs": 88442.991125,
+          "createFinishedAtMs": 110900.595708,
+          "firstStatusMs": 1228.5465840000002,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 15353.430083,
+          "createStartedAtMs": 110900.612083,
+          "createFinishedAtMs": 126254.042166,
+          "firstStatusMs": 2642.9523750000003,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 14460.765625,
+          "createStartedAtMs": 126254.08075,
+          "createFinishedAtMs": 140714.846416,
+          "firstStatusMs": 1938.997459,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 12878.543875,
+          "createStartedAtMs": 140714.86887500001,
+          "createFinishedAtMs": 153593.41275,
+          "firstStatusMs": 1969.537583,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 14274.875875,
+          "createStartedAtMs": 153593.43058299998,
+          "createFinishedAtMs": 167868.30649999998,
+          "firstStatusMs": 3297.5455,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 15149.980708,
+          "createStartedAtMs": 167868.321208,
+          "createFinishedAtMs": 183018.301958,
+          "firstStatusMs": 5101.900292,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 12754.777917,
+          "createStartedAtMs": 183018.319583,
+          "createFinishedAtMs": 195773.09766600002,
+          "firstStatusMs": 8428.651958999999,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 18008.56875,
+          "createStartedAtMs": 195773.113166,
+          "createFinishedAtMs": 213781.681958,
+          "firstStatusMs": 2244.2561250000003,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "git",
+      "repeat": 2,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 182299.021625,
+      "harnessCpuMsDuringCreate": 28.721999999979744,
+      "observerWallMs": 182299.355792,
+      "createsPerSecond": 0.054854929614326725,
+      "statusAndVerificationWallMs": 143932.861333,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": false,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1250349056,
+        "totalBytes": 25560047616,
+        "stable": false,
+        "observedAllocatedBytes": [
+          1249939456,
+          1250398208,
+          1249472512,
+          1249869824,
+          1250193408,
+          1249488896,
+          1249943552,
+          1250435072,
+          1249734656,
+          1249910784,
+          1250140160,
+          1250349056
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 10887786496,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10887786496,
+          10887786496,
+          10887786496
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 10882879488,
+        "totalBytes": 25560047616,
+        "stable": false,
+        "observedAllocatedBytes": [
+          10882936832,
+          10882936832,
+          10883125248,
+          10882859008,
+          10882990080,
+          10882715648,
+          10882535424,
+          10882899968,
+          10883182592,
+          10882523136,
+          10882650112,
+          10882879488
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 10882244608,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          10882244608,
+          10882244608,
+          10882244608
+        ]
+      },
+      "growthAfterCreateBytes": 9637437440,
+      "growthAfterStatusBytes": 9632530432,
+      "privateWriteGrowthBytes": -634880,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 21375.586833,
+          "createStartedAtMs": 0.103834,
+          "createFinishedAtMs": 21375.690709000002,
+          "firstStatusMs": 1855.424,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 13339.175875,
+          "createStartedAtMs": 21375.708416999998,
+          "createFinishedAtMs": 34714.884292,
+          "firstStatusMs": 2637.089167,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 12715.827166000001,
+          "createStartedAtMs": 34714.905334,
+          "createFinishedAtMs": 47430.732542,
+          "firstStatusMs": 4354.022666,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 20621.550875,
+          "createStartedAtMs": 47430.748834,
+          "createFinishedAtMs": 68052.29975,
+          "firstStatusMs": 1913.5717080000002,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 13587.27725,
+          "createStartedAtMs": 68052.316542,
+          "createFinishedAtMs": 81639.593834,
+          "firstStatusMs": 2619.600667,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 13294.185375,
+          "createStartedAtMs": 81639.611875,
+          "createFinishedAtMs": 94933.79725,
+          "firstStatusMs": 4806.618791,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 20947.811625,
+          "createStartedAtMs": 94933.81391699999,
+          "createFinishedAtMs": 115881.625625,
+          "firstStatusMs": 2440.4830840000004,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 21052.355417000002,
+          "createStartedAtMs": 115881.650125,
+          "createFinishedAtMs": 136934.005542,
+          "firstStatusMs": 3932.860292,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 26530.003833,
+          "createStartedAtMs": 136934.024334,
+          "createFinishedAtMs": 163464.02820899998,
+          "firstStatusMs": 2855.8417499999996,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 18834.975667,
+          "createStartedAtMs": 163464.04591699998,
+          "createFinishedAtMs": 182299.021625,
+          "firstStatusMs": 2386.463542,
+          "exitCode": 0,
+          "nativeCow": false,
+          "verified": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "repository": "openclaw",
+      "sourceCommit": "410c0dda40702e25263b49b8b7d0786a5e49e366",
+      "sourceTree": "16be5eb7eee60e1285bb8be4db00d9910b200e42",
+      "backend": "twig",
+      "repeat": 2,
+      "trackedFiles": 65500,
+      "logicalBytesPerWorktree": 776199844,
+      "createWallMs": 201145.729833,
+      "harnessCpuMsDuringCreate": 11.60800000000745,
+      "observerWallMs": 201146.60475,
+      "createsPerSecond": 0.04971519906638057,
+      "statusAndVerificationWallMs": 216911.984333,
+      "succeeded": 10,
+      "failed": 0,
+      "verifiedFiles": 655000,
+      "sourceUnchanged": true,
+      "privateWriteTested": true,
+      "warmupCleanupRecovered": false,
+      "privateWriteFileBytes": 1032,
+      "privateWriteOffset": 0,
+      "before": {
+        "allocatedBytes": 1248440320,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1248440320,
+          1248440320,
+          1248440320
+        ]
+      },
+      "afterCreate": {
+        "allocatedBytes": 1575051264,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1575051264,
+          1575051264,
+          1575051264
+        ]
+      },
+      "afterStatus": {
+        "allocatedBytes": 1571364864,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1571364864,
+          1571364864,
+          1571364864
+        ]
+      },
+      "afterPrivateWrites": {
+        "allocatedBytes": 1571414016,
+        "totalBytes": 25560047616,
+        "stable": true,
+        "observedAllocatedBytes": [
+          1571401728,
+          1571401728,
+          1571414016,
+          1571414016,
+          1571414016
+        ]
+      },
+      "growthAfterCreateBytes": 326610944,
+      "growthAfterStatusBytes": 322924544,
+      "privateWriteGrowthBytes": 49152,
+      "operations": [
+        {
+          "worker": 0,
+          "createMs": 17813.430125,
+          "createStartedAtMs": 0.061083,
+          "createFinishedAtMs": 17813.49125,
+          "firstStatusMs": 15687.326291,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 1,
+          "createMs": 17149.389458,
+          "createStartedAtMs": 17813.509667000002,
+          "createFinishedAtMs": 34962.899208,
+          "firstStatusMs": 17669.299541,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 2,
+          "createMs": 25670.526082999997,
+          "createStartedAtMs": 34962.915541999995,
+          "createFinishedAtMs": 60633.441667,
+          "firstStatusMs": 14639.454792,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 3,
+          "createMs": 17942.614875,
+          "createStartedAtMs": 60633.459333,
+          "createFinishedAtMs": 78576.07425,
+          "firstStatusMs": 13884.112708,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 4,
+          "createMs": 20880.379458,
+          "createStartedAtMs": 78576.090792,
+          "createFinishedAtMs": 99456.470417,
+          "firstStatusMs": 13218.737083,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 5,
+          "createMs": 19422.519708,
+          "createStartedAtMs": 99456.48574999999,
+          "createFinishedAtMs": 118879.0055,
+          "firstStatusMs": 13530.026917000001,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 6,
+          "createMs": 19094.616958,
+          "createStartedAtMs": 118879.0225,
+          "createFinishedAtMs": 137973.6395,
+          "firstStatusMs": 13362.685000000001,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 7,
+          "createMs": 20651.502540999998,
+          "createStartedAtMs": 137973.654542,
+          "createFinishedAtMs": 158625.157125,
+          "firstStatusMs": 13787.863125,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 8,
+          "createMs": 18595.718125,
+          "createStartedAtMs": 158625.173458,
+          "createFinishedAtMs": 177220.89162500002,
+          "firstStatusMs": 12842.445915999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        },
+        {
+          "worker": 9,
+          "createMs": 23924.824084,
+          "createStartedAtMs": 177220.905708,
+          "createFinishedAtMs": 201145.729833,
+          "firstStatusMs": 13208.906332999999,
+          "exitCode": 0,
+          "nativeCow": true,
+          "verified": true,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

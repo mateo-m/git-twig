@@ -29,7 +29,7 @@ impl Staging {
         let container = create_private(&parent)?;
         self.container = Some(container.clone());
         crate::trace(&format!(
-            "staging retained on failure at {}",
+            "private staging: {} (retained if creation fails)",
             container.display()
         ));
 

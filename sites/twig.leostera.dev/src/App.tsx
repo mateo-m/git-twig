@@ -69,6 +69,9 @@ function DiskChart({ data }: { data: DiskComparison[] }) {
             <div className="repo-heading">
               <h3>
                 <a href={repo.source}>{repo.name}</a>
+                {repo.worktrees > 1 && (
+                  <small className="cohort-count" title={`${repo.worktrees} sequential worktrees`}>×{repo.worktrees}</small>
+                )}
               </h3>
               <span className={saved >= 0 ? "less" : "more"}>
                 {Math.abs(saved).toFixed(1)}% {saved >= 0 ? "less" : "more"}
